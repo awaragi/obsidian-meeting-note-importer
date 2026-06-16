@@ -1,0 +1,37 @@
+.ical-modal .ical-drop-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 48px 32px;
+  border: 2px dashed var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.ical-modal .ical-drop-zone--over {
+  border-color: var(--interactive-accent);
+  background-color: color-mix(in srgb, var(--interactive-accent) 10%, transparent);
+}
+
+.ical-modal .ical-drop-icon {
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.ical-modal .ical-drop-label {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-normal);
+}
+
+.ical-modal .ical-drop-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-align: center;
+}
