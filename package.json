@@ -1,6 +1,6 @@
 {
   "name": "obsidian-meeting-note-importer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Obsidian plugin: create meeting notes from dropped .ics files",
   "main": "main.js",
   "scripts": {
@@ -8,7 +8,9 @@
     "build": "node esbuild.config.mjs production",
     "deploy": "node scripts/deploy.mjs",
     "dev:deploy": "npm run dev && npm run deploy",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "release:prepare": "node scripts/version.mjs",
+    "release": "node scripts/publish.mjs"
   },
   "keywords": [],
   "author": "Pierre Awaragi",
