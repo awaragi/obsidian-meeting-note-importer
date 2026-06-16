@@ -31,7 +31,19 @@ class IcsDropModal extends Modal {
     contentEl.createEl("h2", { text: "Import calendar event" });
 
     const zone = contentEl.createDiv({ cls: "ical-drop-zone" });
-    zone.createEl("div", { cls: "ical-drop-icon", text: "📅" });
+
+    // Calendar icon showing today's date
+    const iconWrap = zone.createDiv({ cls: "ical-cal-icon" });
+    const rings = iconWrap.createDiv({ cls: "ical-cal-rings" });
+    rings.createDiv({ cls: "ical-cal-ring" });
+    rings.createDiv({ cls: "ical-cal-ring" });
+    const card = iconWrap.createDiv({ cls: "ical-cal-card" });
+    const now = new Date();
+    card.createDiv({
+      cls: "ical-cal-header",
+      text: now.toLocaleString("en", { month: "short" }).toUpperCase(),
+    });
+    card.createDiv({ cls: "ical-cal-day", text: String(now.getDate()) });
     zone.createEl("p", { cls: "ical-drop-label", text: "Drop .ics file here" });
     zone.createEl("p", {
       cls: "ical-drop-hint",

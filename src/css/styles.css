@@ -17,8 +17,56 @@
   background-color: color-mix(in srgb, var(--interactive-accent) 10%, transparent);
 }
 
-.ical-modal .ical-drop-icon {
-  font-size: 3rem;
+/* Calendar icon */
+.ical-cal-icon {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.ical-cal-rings {
+  display: flex;
+  gap: 16px;
+  position: relative;
+  bottom: -4px;
+  z-index: 2;
+}
+
+.ical-cal-ring {
+  width: 7px;
+  height: 14px;
+  border-radius: 4px;
+  background: linear-gradient(to bottom, #999, #555);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.3), 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.ical-cal-card {
+  width: 56px;
+  border-radius: 7px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.1);
+  background: #fff;
+}
+
+.ical-cal-header {
+  background: #d63030;
+  color: #fff;
+  text-align: center;
+  font-size: 0.5rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  padding: 4px 0 3px;
+  line-height: 1;
+}
+
+.ical-cal-day {
+  color: #1a1a1a;
+  text-align: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+  padding: 4px 0 6px;
   line-height: 1;
 }
 
