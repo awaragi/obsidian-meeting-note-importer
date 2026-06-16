@@ -1,5 +1,6 @@
 import { AbstractInputSuggest, App, PluginSettingTab, Setting, TAbstractFile, TFile, TFolder } from "obsidian";
 import type IcalMeetingNotesPlugin from "./main";
+import { t } from "./i18n";
 
 export interface IcalMeetingNotesSettings {
   /** Vault folder path where created notes are saved. Empty = vault root. */
@@ -97,18 +98,18 @@ export class IcalMeetingNotesSettingTab extends PluginSettingTab {
   display(): void {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: "iCal Meeting Notes" });
+    containerEl.createEl("h2", { text: t("settings.heading") });
 
     new Setting(containerEl)
-      .setName("Notes folder")
-      .setDesc("Vault folder where meeting notes are saved. Leave empty to save to the vault root.")
+      .setName(t("settings.folder.name"))
+      .setDesc(t("settings.folder.desc"))
       .addText((text) => {
         new FolderSuggest(this.app, text.inputEl, async (value) => {
           this.plugin.settings.notesFolder = value;
           await this.plugin.saveSettings();
         });
         text
-          .setPlaceholder("e.g. Meetings")
+          .setPlaceholder(t("settings.folder.placeholder"))
           .setValue(this.plugin.settings.notesFolder)
           .onChange(async (value) => {
             this.plugin.settings.notesFolder = value.trim();
@@ -117,18 +118,15 @@ export class IcalMeetingNotesSettingTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
-      .setName("Template file")
-      .setDesc(
-        "Path to an Obsidian template file using {{date}} and {{title}} placeholders. " +
-          "Leave empty to use the built-in template."
-      )
+      .setName(t("settings.template.name"))
+      .setDesc(t("settings.template.desc"))
       .addText((text) => {
         new FileSuggest(this.app, text.inputEl, async (value) => {
           this.plugin.settings.templateFile = value;
           await this.plugin.saveSettings();
         });
         text
-          .setPlaceholder("e.g. _templates/Meeting.md")
+          .setPlaceholder(t("settings.template.placeholder"))
           .setValue(this.plugin.settings.templateFile)
           .onChange(async (value) => {
             this.plugin.settings.templateFile = value.trim();
@@ -137,8 +135,8 @@ export class IcalMeetingNotesSettingTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
-      .setName("Attendees heading")
-      .setDesc("Exact heading line under which the attendee list is injected.")
+      .setName(t("settings.attendees_heading.name"))
+      .setDesc(t("settings.attendees_heading.desc"))
       .addText((text) =>
         text
           .setPlaceholder("## Attendees")
@@ -150,8 +148,8 @@ export class IcalMeetingNotesSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Notes heading")
-      .setDesc("Exact heading line under which the meeting URL and description are injected.")
+      .setName(t("settings.notes_heading.name"))
+      .setDesc(t("settings.notes_heading.desc"))
       .addText((text) =>
         text
           .setPlaceholder("## Notes")
@@ -163,8 +161,8 @@ export class IcalMeetingNotesSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Open note after creation")
-      .setDesc("Automatically open the newly created meeting note.")
+      .setName(t("settings.open_after.name"))
+      .setDesc(t("settings.open_after.desc"))
       .addToggle((toggle) =>
         toggle.setValue(this.plugin.settings.openAfterCreate).onChange(async (value) => {
           this.plugin.settings.openAfterCreate = value;

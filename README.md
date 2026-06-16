@@ -11,6 +11,9 @@ An Obsidian plugin that creates structured meeting notes from calendar invites �
 - Skips duplicate notes — if a note for that meeting already exists it is returned without overwriting
 - Supports a custom Obsidian template with `{{date}}` and `{{title}}` placeholders
 - Configurable target folder and heading names for attendees and notes sections
+- Localised UI in English, French, and Spanish — automatically follows Obsidian's language setting
+
+> **Note:** This plugin is designed for desktop use. Drag-and-drop and direct Outlook integration rely on desktop APIs. Mobile behaviour is untested.
 
 ## Usage
 
@@ -56,6 +59,21 @@ tags:
 | Attendees heading | `## Attendees` | Heading under which attendees are injected |
 | Notes heading | `## Notes` | Heading under which the meeting URL and description are injected |
 | Open note after creation | On | Automatically open the note after it is created |
+
+## Localisation
+
+The plugin UI is available in **English** (default), **French**, and **Spanish**. The language is detected automatically from Obsidian's language setting (via the built-in `moment.js` locale).
+
+To add a new language:
+
+1. Copy `src/ts/i18n/en.json` to `src/ts/i18n/<code>.json` (e.g. `de.json`)
+2. Translate all values — keys must stay identical to `en.json`
+3. Import and register it in `src/ts/i18n.ts`:
+   ```ts
+   import de from "./i18n/de.json";
+   const locales = { en, fr, es, de };
+   ```
+4. Rebuild with `npm run build`
 
 ## Installation
 

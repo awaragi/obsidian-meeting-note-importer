@@ -1,6 +1,7 @@
 import { App, Notice, TFile, TFolder, normalizePath } from "obsidian";
 import { MeetingEvent } from "./icalParser";
 import { IcalMeetingNotesSettings } from "./settingsTab";
+import { t } from "./i18n";
 
 const BUILTIN_TEMPLATE = `---
 title: "{{date}} - {{title}}"
@@ -49,7 +50,7 @@ function injectUnderHeading(content: string, heading: string, block: string): st
 
 function buildAttendeesBlock(event: MeetingEvent): string {
   const items: string[] = [];
-  if (event.organizer) items.push(`- ${event.organizer} (Organizer)`);
+  if (event.organizer) items.push(`- ${event.organizer} (${t("organizer_label")})`);
   for (const a of event.attendees) items.push(`- ${a}`);
   return items.join("\n");
 }
@@ -87,7 +88,7 @@ export async function createMeetingNote(
   // Return existing note without overwriting
   const existing = app.vault.getAbstractFileByPath(filePath);
   if (existing instanceof TFile) {
-    new Notice(`Note already exists: ${fileName}`);
+    new Notice(t("notice.note_exists", { name: fileName }));
     return existing;
   }
 

@@ -6,6 +6,7 @@ import {
   IcalMeetingNotesSettings,
   IcalMeetingNotesSettingTab,
 } from "./settingsTab";
+import { t, locale } from "./i18n";
 
 // ── Drop Modal ─────────────────────────────────────────────────────────────
 
@@ -28,7 +29,7 @@ class IcsDropModal extends Modal {
     contentEl.empty();
     contentEl.addClass("ical-modal");
 
-    contentEl.createEl("h2", { text: "Import calendar event" });
+    contentEl.createEl("h2", { text: t("modal.title") });
 
     const zone = contentEl.createDiv({ cls: "ical-drop-zone" });
 
@@ -41,14 +42,11 @@ class IcsDropModal extends Modal {
     const now = new Date();
     card.createDiv({
       cls: "ical-cal-header",
-      text: now.toLocaleString("en", { month: "short" }).toUpperCase(),
+      text: now.toLocaleString(locale(), { month: "short" }).toUpperCase(),
     });
     card.createDiv({ cls: "ical-cal-day", text: String(now.getDate()) });
-    zone.createEl("p", { cls: "ical-drop-label", text: "Drop .ics file here" });
-    zone.createEl("p", {
-      cls: "ical-drop-hint",
-      text: "Drag a calendar event from Outlook, or click to browse for a .ics file.",
-    });
+    zone.createEl("p", { cls: "ical-drop-label", text: t("modal.drop_label") });
+    zone.createEl("p", { cls: "ical-drop-hint", text: t("modal.drop_hint") });
 
     // Hidden file input for click-to-browse
     const fileInput = contentEl.createEl("input", {
@@ -95,13 +93,13 @@ export default class IcalMeetingNotesPlugin extends Plugin {
     await this.loadSettings();
     this.addSettingTab(new IcalMeetingNotesSettingTab(this.app, this));
 
-    this.addRibbonIcon("calendar-plus", "Import iCal meeting note", () => {
+    this.addRibbonIcon("calendar-plus", t("ribbon.tooltip"), () => {
       this.openDropModal();
     });
 
     this.addCommand({
       id: "import-ics-meeting-note",
-      name: "Import meeting note from .ics file",
+      name: t("command.name"),
       callback: () => this.openDropModal(),
     });
   }
@@ -132,7 +130,7 @@ export default class IcalMeetingNotesPlugin extends Plugin {
   private handleDrop(e: DragEvent) {
     const dt = e.dataTransfer;
     if (!dt) {
-      new Notice("iCal Meeting Notes: no data in the drop.");
+      new Notice(t("notice.no_data"));
       return;
     }
 
@@ -168,7 +166,7 @@ export default class IcalMeetingNotesPlugin extends Plugin {
       }
     }
 
-    new Notice("iCal Meeting Notes: could not extract calendar data from the drop.");
+    new Notice(t("notice.no_calendar"));
   }
 
   private readFileAsText(file: File) {
@@ -178,7 +176,7 @@ export default class IcalMeetingNotesPlugin extends Plugin {
       if (typeof raw === "string") await this.processIcsContent(raw, file.name);
     };
     reader.onerror = () =>
-      new Notice("iCal Meeting Notes: failed to read the file.");
+      new Notice(t("notice.read_failed"));
     reader.readAsText(file, "utf-8");
   }
 
@@ -187,7 +185,7 @@ export default class IcalMeetingNotesPlugin extends Plugin {
     try {
       event = parseIcs(raw);
     } catch (err) {
-      new Notice(`iCal Meeting Notes: failed to parse ${sourceName} — ${String(err)}`);
+      new Notice(t("notice.parse_failed", { name: sourceName, err: String(err) }));
       console.error("iCal Meeting Notes parse error:", err);
       return;
     }
@@ -199,12 +197,12 @@ export default class IcalMeetingNotesPlugin extends Plugin {
     try {
       note = await createMeetingNote(this.app, event, this.settings);
     } catch (err) {
-      new Notice(`iCal Meeting Notes: failed to create note — ${String(err)}`);
+      new Notice(t("notice.create_failed", { err: String(err) }));
       console.error("iCal Meeting Notes create error:", err);
       return;
     }
 
-    new Notice(`Meeting note created: ${note.basename}`);
+    new Notice(t("notice.note_created", { name: note.basename }));
     if (this.settings.openAfterCreate) {
       const leaf = this.app.workspace.getLeaf(false);
       await leaf.openFile(note);
