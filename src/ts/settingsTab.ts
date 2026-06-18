@@ -1,4 +1,12 @@
-import { AbstractInputSuggest, App, PluginSettingTab, Setting, TAbstractFile, TFile, TFolder } from "obsidian";
+import {
+  AbstractInputSuggest,
+  App,
+  PluginSettingTab,
+  Setting,
+  TAbstractFile,
+  TFile,
+  TFolder,
+} from "obsidian";
 import type IcalMeetingNotesPlugin from "./main";
 import { t } from "./i18n";
 
@@ -26,11 +34,11 @@ export const DEFAULT_SETTINGS: IcalMeetingNotesSettings = {
 // ── Folder suggest ─────────────────────────────────────────────────────────
 
 class FolderSuggest extends AbstractInputSuggest<TFolder> {
-  private onSelect: (value: string) => void;
+  private selectCallback: (value: string) => void;
 
   constructor(app: App, inputEl: HTMLInputElement, onSelect: (value: string) => void) {
     super(app, inputEl);
-    this.onSelect = onSelect;
+    this.selectCallback = onSelect;
   }
 
   getSuggestions(query: string): TFolder[] {
@@ -51,7 +59,7 @@ class FolderSuggest extends AbstractInputSuggest<TFolder> {
   selectSuggestion(folder: TFolder) {
     const value = folder.isRoot() ? "" : folder.path;
     this.setValue(value);
-    this.onSelect(value);
+    this.selectCallback(value);
     this.close();
   }
 }
@@ -59,11 +67,11 @@ class FolderSuggest extends AbstractInputSuggest<TFolder> {
 // ── Markdown file suggest ──────────────────────────────────────────────────
 
 class FileSuggest extends AbstractInputSuggest<TFile> {
-  private onSelect: (value: string) => void;
+  private selectCallback: (value: string) => void;
 
   constructor(app: App, inputEl: HTMLInputElement, onSelect: (value: string) => void) {
     super(app, inputEl);
-    this.onSelect = onSelect;
+    this.selectCallback = onSelect;
   }
 
   getSuggestions(query: string): TFile[] {
@@ -80,7 +88,7 @@ class FileSuggest extends AbstractInputSuggest<TFile> {
 
   selectSuggestion(file: TFile) {
     this.setValue(file.path);
-    this.onSelect(file.path);
+    this.selectCallback(file.path);
     this.close();
   }
 }

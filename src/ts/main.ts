@@ -55,7 +55,10 @@ class IcsDropModal extends Modal {
     });
     fileInput.addEventListener("change", () => {
       const file = fileInput.files?.[0];
-      if (file) { this.close(); this.onFilePicked(file); }
+      if (file) {
+        this.close();
+        this.onFilePicked(file);
+      }
     });
 
     zone.addEventListener("click", () => fileInput.click());
@@ -87,7 +90,7 @@ class IcsDropModal extends Modal {
 // ── Plugin ─────────────────────────────────────────────────────────────────
 
 export default class IcalMeetingNotesPlugin extends Plugin {
-  settings: IcalMeetingNotesSettings;
+  settings!: IcalMeetingNotesSettings;
 
   async onload() {
     await this.loadSettings();
@@ -146,7 +149,10 @@ export default class IcalMeetingNotesPlugin extends Plugin {
     for (const item of Array.from(dt.items)) {
       if (item.kind === "file") {
         const file = item.getAsFile();
-        if (file) { this.readFileAsText(file); return; }
+        if (file) {
+          this.readFileAsText(file);
+          return;
+        }
       }
     }
 
@@ -175,8 +181,7 @@ export default class IcalMeetingNotesPlugin extends Plugin {
       const raw = ev.target?.result;
       if (typeof raw === "string") await this.processIcsContent(raw, file.name);
     };
-    reader.onerror = () =>
-      new Notice(t("notice.read_failed"));
+    reader.onerror = () => new Notice(t("notice.read_failed"));
     reader.readAsText(file, "utf-8");
   }
 

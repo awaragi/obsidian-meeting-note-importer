@@ -100,12 +100,11 @@ export async function createMeetingNote(
   }
 
   // Simple search-and-replace — same {{placeholder}} syntax as Obsidian Templates
-  let content = raw
-    .replace(/\{\{date\}\}/g, event.date)
-    .replace(/\{\{title\}\}/g, event.title);
+  let content = raw.replace(/\{\{date\}\}/g, event.date).replace(/\{\{title\}\}/g, event.title);
 
   const attendeesBlock = buildAttendeesBlock(event);
-  if (attendeesBlock) content = injectUnderHeading(content, settings.attendeesHeading, attendeesBlock);
+  if (attendeesBlock)
+    content = injectUnderHeading(content, settings.attendeesHeading, attendeesBlock);
 
   const notesBlock = buildNotesBlock(event);
   if (notesBlock) content = injectUnderHeading(content, settings.notesHeading, notesBlock);

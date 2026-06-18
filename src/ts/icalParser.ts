@@ -4,14 +4,14 @@ const ICAL = require("ical.js") as typeof import("ical.js");
 
 export interface MeetingEvent {
   title: string;
-  date: string;        // YYYY-MM-DD
-  startTime: string;   // HH:mm (local)
-  endTime: string;     // HH:mm (local)
-  organizer: string;   // display name or email
+  date: string; // YYYY-MM-DD
+  startTime: string; // HH:mm (local)
+  endTime: string; // HH:mm (local)
+  organizer: string; // display name or email
   attendees: string[]; // display names or emails, organizer excluded
   description: string;
   location: string;
-  meetingUrl: string;  // Teams / Zoom / Meet link, empty if not found
+  meetingUrl: string; // Teams / Zoom / Meet link, empty if not found
 }
 
 const MEETING_URL_PATTERNS = [
@@ -97,9 +97,7 @@ export function parseOutlookText(text: string): MeetingEvent | null {
 
   // Note: [name] has organized this meeting.
   const noteLine = lines.find((l) => /^Note:/i.test(l));
-  const organizer = noteLine
-    ? (noteLine.match(/^Note:\s*(.+?)\s+has organized/i)?.[1] ?? "")
-    : "";
+  const organizer = noteLine ? (noteLine.match(/^Note:\s*(.+?)\s+has organized/i)?.[1] ?? "") : "";
 
   // Invitees: comma-separated list
   const inviteesLine = lines.find((l) => /^Invitees:/i.test(l));
@@ -118,7 +116,17 @@ export function parseOutlookText(text: string): MeetingEvent | null {
 
   const meetingUrl = extractMeetingUrl(description) || extractMeetingUrl(location);
 
-  return { title, date, startTime, endTime, organizer, attendees, description, location, meetingUrl };
+  return {
+    title,
+    date,
+    startTime,
+    endTime,
+    organizer,
+    attendees,
+    description,
+    location,
+    meetingUrl,
+  };
 }
 
 export function parseIcs(raw: string): MeetingEvent {
@@ -129,8 +137,7 @@ export function parseIcs(raw: string): MeetingEvent {
 
   if (!vevent) throw new Error("No VEVENT found in the iCal file.");
 
-  const title =
-    (vevent.getFirstPropertyValue("summary") as string | null) ?? "Untitled Meeting";
+  const title = (vevent.getFirstPropertyValue("summary") as string | null) ?? "Untitled Meeting";
 
   const dtstart = vevent.getFirstProperty("dtstart")?.getFirstValue() as
     | InstanceType<typeof ICAL.Time>
@@ -147,7 +154,7 @@ export function parseIcs(raw: string): MeetingEvent {
   const organizer = organizerProp
     ? extractDisplayName(
         (organizerProp.getFirstValue() as string) ?? "",
-        ((organizerProp.toJSON()?.[1]) as Record<string, string>) ?? {}
+        (organizerProp.toJSON()?.[1] as Record<string, string>) ?? {}
       )
     : "";
 
@@ -160,18 +167,26 @@ export function parseIcs(raw: string): MeetingEvent {
   vevent.getAllProperties("attendee").forEach((prop: any) => {
     const addr = (prop.getFirstValue() as string) ?? "";
     if (addr.replace(/^mailto:/i, "").toLowerCase() === organizerEmail) return;
-    const params: Record<string, string> =
-      ((prop.toJSON()?.[1]) as Record<string, string>) ?? {};
+    const params: Record<string, string> = (prop.toJSON()?.[1] as Record<string, string>) ?? {};
     attendees.push(extractDisplayName(addr, params));
   });
 
-  const description =
-    ((vevent.getFirstPropertyValue("description") as string | null) ?? "").trim();
-  const location =
-    ((vevent.getFirstPropertyValue("location") as string | null) ?? "").trim();
-  const teamsUrl =
-    ((vevent.getFirstPropertyValue("x-microsoft-skypeteamsmeetingurl") as string | null) ?? "").trim();
+  const description = ((vevent.getFirstPropertyValue("description") as string | null) ?? "").trim();
+  const location = ((vevent.getFirstPropertyValue("location") as string | null) ?? "").trim();
+  const teamsUrl = (
+    (vevent.getFirstPropertyValue("x-microsoft-skypeteamsmeetingurl") as string | null) ?? ""
+  ).trim();
   const meetingUrl = teamsUrl || extractMeetingUrl(description) || extractMeetingUrl(location);
 
-  return { title, date, startTime, endTime, organizer, attendees, description, location, meetingUrl };
+  return {
+    title,
+    date,
+    startTime,
+    endTime,
+    organizer,
+    attendees,
+    description,
+    location,
+    meetingUrl,
+  };
 }
