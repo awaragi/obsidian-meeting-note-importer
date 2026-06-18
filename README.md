@@ -81,7 +81,7 @@ To add a new language:
 ### Manual
 
 1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](../../releases/latest)
-2. Copy them into your vault at `.obsidian/plugins/obsidian-meeting-note-importer/`
+2. Copy them into your vault at `.obsidian/plugins/meeting-note-importer/`
 3. Enable the plugin in **Settings → Community plugins**
 
 ## Development
