@@ -1,0 +1,15 @@
+schema: spec-driven
+openlore:
+  version: 1.0.0
+  generatedAt: 2026-06-18T13:21:39.050Z
+  domains:
+    - settings
+    - ical-parser
+    - note-creator
+    - i18n
+  confidence: 0.88
+context: |-
+  # Auto-detected by openlore
+  Tech stack: TypeScript, Obsidian, Vitest, GitHub Actions
+  Architecture: Monolithic
+  Domains: settings, ical-parser, note-creator, i18n

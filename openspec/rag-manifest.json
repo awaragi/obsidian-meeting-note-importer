@@ -1,0 +1,50 @@
+{
+  "generatedAt": "2026-06-18T13:21:39.054Z",
+  "specVersion": "1.0.0",
+  "domains": [
+    {
+      "domain": "i18n",
+      "specPath": "openspec/specs/i18n/spec.md",
+      "sourceFiles": [
+        "/Users/pawaragi/Develop/Projects/obsidian-meeting-note-importer/src/ts/i18n/en.json",
+        "/Users/pawaragi/Develop/Projects/obsidian-meeting-note-importer/src/ts/i18n/fr.json",
+        "/Users/pawaragi/Develop/Projects/obsidian-meeting-note-importer/src/ts/i18n/es.json"
+      ],
+      "requirementCount": 2,
+      "dependsOn": [],
+      "calledBy": [
+        "ts"
+      ]
+    },
+    {
+      "domain": "ical-parser",
+      "specPath": "openspec/specs/ical-parser/spec.md",
+      "sourceFiles": [],
+      "requirementCount": 3,
+      "dependsOn": [],
+      "calledBy": []
+    },
+    {
+      "domain": "note-creator",
+      "specPath": "openspec/specs/note-creator/spec.md",
+      "sourceFiles": [],
+      "requirementCount": 2,
+      "dependsOn": [],
+      "calledBy": []
+    },
+    {
+      "domain": "settings",
+      "specPath": "openspec/specs/settings/spec.md",
+      "sourceFiles": [
+        "/Users/pawaragi/Develop/Projects/obsidian-meeting-note-importer/src/ts/settingsTab.ts"
+      ],
+      "requirementCount": 15,
+      "dependsOn": [
+        "ts"
+      ],
+      "calledBy": [
+        "ts"
+      ]
+    }
+  ]
+}

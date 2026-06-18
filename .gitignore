@@ -22,3 +22,6 @@ main.js.map
 
 # Obsidian test vault (if any)
 test-vault/
+
+# openlore analysis artifacts
+.openlore/
