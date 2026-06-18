@@ -1,6 +1,6 @@
 {
   "name": "obsidian-meeting-note-importer",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "Obsidian plugin: create meeting notes from dropped .ics files",
   "main": "main.js",
   "scripts": {
