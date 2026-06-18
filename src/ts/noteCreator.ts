@@ -12,10 +12,13 @@ tags:
 # {{date}} - {{title}}
 
 ## Attendees
-- 
+-
+
+## Invite Notes
+-
 
 ## Notes
-- 
+-
 
 ## Summary
 

@@ -18,6 +18,9 @@ tags:
 ## Attendees
 -
 
+## Invite Notes
+-
+
 ## Notes
 -
 
@@ -71,7 +74,7 @@ function buildNote(event: MeetingEvent): string {
   const attendeesBlock = buildAttendeesBlock(event);
   if (attendeesBlock) content = injectUnderHeading(content, "## Attendees", attendeesBlock);
   const notesBlock = buildNotesBlock(event);
-  if (notesBlock) content = injectUnderHeading(content, "## Notes", notesBlock);
+  if (notesBlock) content = injectUnderHeading(content, "## Invite Notes", notesBlock);
   return content;
 }
 

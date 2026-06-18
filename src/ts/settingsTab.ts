@@ -27,7 +27,7 @@ export const DEFAULT_SETTINGS: IcalMeetingNotesSettings = {
   notesFolder: "",
   templateFile: "",
   attendeesHeading: "## Attendees",
-  notesHeading: "## Notes",
+  notesHeading: "## Invite Notes",
   openAfterCreate: true,
 };
 
@@ -160,7 +160,7 @@ export class IcalMeetingNotesSettingTab extends PluginSettingTab {
       .setDesc(t("settings.notes_heading.desc"))
       .addText((text) =>
         text
-          .setPlaceholder("## Notes")
+          .setPlaceholder("## Invite Notes")
           .setValue(this.plugin.settings.notesHeading)
           .onChange(async (value) => {
             this.plugin.settings.notesHeading = value.trim();
