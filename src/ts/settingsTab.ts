@@ -37,7 +37,7 @@ export const DEFAULT_SETTINGS: IcalMeetingNotesSettings = {
 // ── Folder suggest ─────────────────────────────────────────────────────────
 
 class FolderSuggest extends AbstractInputSuggest<TFolder> {
-  private selectCallback: (value: string) => void;
+  private selectCallback: (value: string) => void | Promise<void>;
 
   constructor(app: App, inputEl: HTMLInputElement, onSelect: (value: string) => void | Promise<void>) {
     super(app, inputEl);
@@ -70,7 +70,7 @@ class FolderSuggest extends AbstractInputSuggest<TFolder> {
 // ── Markdown file suggest ──────────────────────────────────────────────────
 
 class FileSuggest extends AbstractInputSuggest<TFile> {
-  private selectCallback: (value: string) => void;
+  private selectCallback: (value: string) => void | Promise<void>;
 
   constructor(app: App, inputEl: HTMLInputElement, onSelect: (value: string) => void | Promise<void>) {
     super(app, inputEl);
