@@ -13,6 +13,8 @@ import { t } from "./i18n";
 export interface IcalMeetingNotesSettings {
   /** Vault folder path where created notes are saved. Empty = vault root. */
   notesFolder: string;
+  /** When true, save in the folder of the currently open file instead of notesFolder. */
+  useActiveFolder: boolean;
   /** Vault path to an Obsidian template file. Empty = use built-in template. */
   templateFile: string;
   /** The exact heading line under which attendees are injected. */
@@ -25,6 +27,7 @@ export interface IcalMeetingNotesSettings {
 
 export const DEFAULT_SETTINGS: IcalMeetingNotesSettings = {
   notesFolder: "",
+  useActiveFolder: true,
   templateFile: "",
   attendeesHeading: "## Attendees",
   notesHeading: "## Invite Notes",
@@ -109,6 +112,17 @@ export class IcalMeetingNotesSettingTab extends PluginSettingTab {
     containerEl.createEl("h2", { text: t("settings.heading") });
 
     new Setting(containerEl)
+      .setName(t("settings.active_folder.name"))
+      .setDesc(t("settings.active_folder.desc"))
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.useActiveFolder).onChange(async (value) => {
+          this.plugin.settings.useActiveFolder = value;
+          await this.plugin.saveSettings();
+          this.display();
+        })
+      );
+
+    new Setting(containerEl)
       .setName(t("settings.folder.name"))
       .setDesc(t("settings.folder.desc"))
       .addText((text) => {
@@ -119,6 +133,7 @@ export class IcalMeetingNotesSettingTab extends PluginSettingTab {
         text
           .setPlaceholder(t("settings.folder.placeholder"))
           .setValue(this.plugin.settings.notesFolder)
+          .setDisabled(this.plugin.settings.useActiveFolder)
           .onChange(async (value) => {
             this.plugin.settings.notesFolder = value.trim();
             await this.plugin.saveSettings();

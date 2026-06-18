@@ -71,6 +71,17 @@ function buildNotesBlock(event: MeetingEvent): string {
   return parts.join("\n");
 }
 
+export function resolveTargetFolder(app: App, settings: IcalMeetingNotesSettings): string {
+  if (settings.useActiveFolder) {
+    const activeFile = app.workspace.getActiveFile();
+    if (activeFile) {
+      const p = activeFile.parent?.path;
+      return p && p !== "/" ? p : "";
+    }
+  }
+  return settings.notesFolder;
+}
+
 async function ensureFolder(app: App, folderPath: string): Promise<void> {
   if (!folderPath) return;
   const existing = app.vault.getAbstractFileByPath(folderPath);
@@ -85,7 +96,8 @@ export async function createMeetingNote(
 ): Promise<TFile> {
   const safeTitle = event.title.replace(/[\\/:*?"<>|]/g, "-").trim();
   const fileName = `${event.date} - ${safeTitle}.md`;
-  const folder = settings.notesFolder ? normalizePath(settings.notesFolder) : "";
+  const resolved = resolveTargetFolder(app, settings);
+  const folder = resolved ? normalizePath(resolved) : "";
   const filePath = folder ? normalizePath(`${folder}/${fileName}`) : normalizePath(fileName);
 
   // Return existing note without overwriting

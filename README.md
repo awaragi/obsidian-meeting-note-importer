@@ -54,10 +54,11 @@ tags:
 
 | Setting | Default | Description |
 |---|---|---|
-| Notes folder | _(vault root)_ | Folder where meeting notes are saved |
+| Save in active folder | On | Save the note in the folder of the currently open file |
+| Fallback notes folder | _(vault root)_ | Folder used when active-folder is off, or no file is open |
 | Template file | _(built-in)_ | Path to a custom Obsidian template |
 | Attendees heading | `## Attendees` | Heading under which attendees are injected |
-| Notes heading | `## Notes` | Heading under which the meeting URL and description are injected |
+| Notes heading | `## Invite Notes` | Heading under which the meeting URL and description are injected |
 | Open note after creation | On | Automatically open the note after it is created |
 
 ## Localisation

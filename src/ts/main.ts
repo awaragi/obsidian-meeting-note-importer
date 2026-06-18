@@ -1,6 +1,6 @@
-import { Modal, Notice, Plugin } from "obsidian";
+import { App, Modal, Notice, Plugin } from "obsidian";
 import { parseIcs, parseOutlookText } from "./icalParser";
-import { createMeetingNote } from "./noteCreator";
+import { createMeetingNote, resolveTargetFolder } from "./noteCreator";
 import {
   DEFAULT_SETTINGS,
   IcalMeetingNotesSettings,
@@ -13,13 +13,16 @@ import { t, locale } from "./i18n";
 class IcsDropModal extends Modal {
   private onDrop: (e: DragEvent) => void;
   private onFilePicked: (file: File) => void;
+  private settings: IcalMeetingNotesSettings;
 
   constructor(
-    app: import("obsidian").App,
+    app: App,
+    settings: IcalMeetingNotesSettings,
     onDrop: (e: DragEvent) => void,
     onFilePicked: (file: File) => void
   ) {
     super(app);
+    this.settings = settings;
     this.onDrop = onDrop;
     this.onFilePicked = onFilePicked;
   }
@@ -47,6 +50,11 @@ class IcsDropModal extends Modal {
     card.createDiv({ cls: "ical-cal-day", text: String(now.getDate()) });
     zone.createEl("p", { cls: "ical-drop-label", text: t("modal.drop_label") });
     zone.createEl("p", { cls: "ical-drop-hint", text: t("modal.drop_hint") });
+
+    const folder = resolveTargetFolder(this.app, this.settings);
+    const locationEl = zone.createEl("p", { cls: "ical-save-location" });
+    locationEl.appendText(t("modal.save_to") + " ");
+    locationEl.createEl("strong", { text: folder || t("modal.vault_root") });
 
     // Hidden file input for click-to-browse
     const fileInput = contentEl.createEl("input", {
@@ -118,6 +126,7 @@ export default class IcalMeetingNotesPlugin extends Plugin {
   private openDropModal() {
     new IcsDropModal(
       this.app,
+      this.settings,
       (e) => this.handleDrop(e),
       (file) => this.readFileAsText(file)
     ).open();
