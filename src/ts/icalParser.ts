@@ -1,6 +1,4 @@
-// ical.js ships a CommonJS bundle without full TypeScript generics — use explicit casts.
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const ICAL = require("ical.js") as typeof import("ical.js");
+import * as ICAL from "ical.js";
 
 export interface MeetingEvent {
   title: string;
@@ -157,8 +155,7 @@ export function parseOutlookText(text: string): MeetingEvent | null {
 export function parseIcs(raw: string): MeetingEvent {
   if (!raw || raw.trim().length === 0) throw new Error("ICS file is empty.");
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const jcal: any = ICAL.parse(raw);
+  const jcal = ICAL.parse(raw);
   const comp = new ICAL.Component(jcal);
   const vevent = comp.getFirstSubcomponent("vevent");
 
@@ -181,7 +178,7 @@ export function parseIcs(raw: string): MeetingEvent {
   const organizer = organizerProp
     ? extractDisplayName(
         (organizerProp.getFirstValue() as string) ?? "",
-        (organizerProp.toJSON()?.[1] as Record<string, string>) ?? {}
+        organizerProp.toJSON()[1]
       )
     : "";
 
@@ -190,11 +187,10 @@ export function parseIcs(raw: string): MeetingEvent {
     : "";
 
   const attendees: string[] = [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  vevent.getAllProperties("attendee").forEach((prop: any) => {
+  vevent.getAllProperties("attendee").forEach((prop) => {
     const addr = (prop.getFirstValue() as string) ?? "";
     if (addr.replace(/^mailto:/i, "").toLowerCase() === organizerEmail) return;
-    const params: Record<string, string> = (prop.toJSON()?.[1] as Record<string, string>) ?? {};
+    const params = prop.toJSON()[1];
     attendees.push(extractDisplayName(addr, params));
   });
 
