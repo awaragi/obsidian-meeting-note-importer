@@ -116,7 +116,7 @@ export default class IcalMeetingNotesPlugin extends Plugin {
   }
 
   async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, (await this.loadData()) as Partial<IcalMeetingNotesSettings>);
   }
 
   async saveSettings() {
@@ -170,13 +170,13 @@ export default class IcalMeetingNotesPlugin extends Plugin {
       const text = dt.getData(mimeType);
       if (!text) continue;
       if (text.includes("BEGIN:VCALENDAR")) {
-        this.processIcsContent(text, "dropped-event.ics");
+        void this.processIcsContent(text, "dropped-event.ics");
         return;
       }
       // 4. Outlook for Mac plain-text summary (no BEGIN:VCALENDAR)
       const event = parseOutlookText(text);
       if (event) {
-        this.processEvent(event);
+        void this.processEvent(event);
         return;
       }
     }

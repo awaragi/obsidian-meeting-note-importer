@@ -18,7 +18,7 @@ function detectLocale(): string {
 const strings: Partial<Translations> = locales[detectLocale()];
 
 export function t(key: keyof Translations, vars?: Record<string, string>): string {
-  let str = (strings[key] ?? en[key]) as string;
+  let str = strings[key] ?? en[key];
   if (vars) {
     for (const [k, v] of Object.entries(vars)) {
       str = str.replaceAll(`{{${k}}}`, v);

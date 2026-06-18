@@ -39,7 +39,7 @@ export const DEFAULT_SETTINGS: IcalMeetingNotesSettings = {
 class FolderSuggest extends AbstractInputSuggest<TFolder> {
   private selectCallback: (value: string) => void;
 
-  constructor(app: App, inputEl: HTMLInputElement, onSelect: (value: string) => void) {
+  constructor(app: App, inputEl: HTMLInputElement, onSelect: (value: string) => void | Promise<void>) {
     super(app, inputEl);
     this.selectCallback = onSelect;
   }
@@ -72,7 +72,7 @@ class FolderSuggest extends AbstractInputSuggest<TFolder> {
 class FileSuggest extends AbstractInputSuggest<TFile> {
   private selectCallback: (value: string) => void;
 
-  constructor(app: App, inputEl: HTMLInputElement, onSelect: (value: string) => void) {
+  constructor(app: App, inputEl: HTMLInputElement, onSelect: (value: string) => void | Promise<void>) {
     super(app, inputEl);
     this.selectCallback = onSelect;
   }
@@ -109,7 +109,7 @@ export class IcalMeetingNotesSettingTab extends PluginSettingTab {
   display(): void {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: t("settings.heading") });
+    new Setting(containerEl).setName(t("settings.heading")).setHeading();
 
     new Setting(containerEl)
       .setName(t("settings.active_folder.name"))
@@ -118,7 +118,6 @@ export class IcalMeetingNotesSettingTab extends PluginSettingTab {
         toggle.setValue(this.plugin.settings.useActiveFolder).onChange(async (value) => {
           this.plugin.settings.useActiveFolder = value;
           await this.plugin.saveSettings();
-          this.display();
         })
       );
 
