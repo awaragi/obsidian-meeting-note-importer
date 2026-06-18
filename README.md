@@ -108,6 +108,23 @@ npm run dev:deploy
 npm run clean
 ```
 
+### Testing
+
+```bash
+# Run all unit tests
+npm test
+
+# Integration test — parse a real .ics file and print the generated note
+TEST_ICS_FILE=/path/to/invite.ics npm test
+
+# Integration test — parse Outlook meeting text saved to a file
+TEST_OUTLOOK_FILE=/path/to/invite.txt npm test
+```
+
+The integration tests are skipped automatically when the env vars are not set, so `npm test` always works without any fixtures.
+
+To get a `.ics` file from Outlook for Mac: right-click a calendar event → **Export…**, or drag the event from Calendar.app to Finder.
+
 ### Releases
 
 Push a version tag to trigger a GitHub Actions build and draft release:

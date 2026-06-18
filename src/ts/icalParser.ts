@@ -23,6 +23,31 @@ const MEETING_URL_PATTERNS = [
   /https:\/\/[a-z0-9.-]+\.webex\.com\/[^\s<>"]+/i,
 ];
 
+// Matches the Teams boilerplate section header in English, French, and Spanish.
+const TEAMS_BOILERPLATE_HEADERS = [
+  /^Microsoft Teams meeting$/i,   // EN
+  /^Réunion Microsoft Teams$/i,   // FR
+  /^Reunión de Microsoft Teams$/i, // ES
+];
+
+export function stripTeamsBoilerplate(text: string): string {
+  const lines = text.split(/\r?\n/);
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+    if (/^_{8,}$/.test(trimmed)) {
+      let j = i + 1;
+      while (j < lines.length && lines[j].trim() === "") j++;
+      if (j < lines.length && TEAMS_BOILERPLATE_HEADERS.some((p) => p.test(lines[j].trim()))) {
+        return lines.slice(0, i).join("\n").trimEnd();
+      }
+    }
+    if (TEAMS_BOILERPLATE_HEADERS.some((p) => p.test(trimmed))) {
+      return lines.slice(0, i).join("\n").trimEnd();
+    }
+  }
+  return text;
+}
+
 function extractMeetingUrl(text: string): string {
   for (const pattern of MEETING_URL_PATTERNS) {
     const match = text.match(pattern);
@@ -112,7 +137,7 @@ export function parseOutlookText(text: string): MeetingEvent | null {
   // Remaining lines after the structured block = description
   const structuredPrefixes = /^(When|Where|Note|Invitees):/i;
   const descLines = lines.slice(whenIdx + 1).filter((l) => !structuredPrefixes.test(l));
-  const description = descLines.join("\n").trim();
+  const description = stripTeamsBoilerplate(descLines.join("\n").trim());
 
   const meetingUrl = extractMeetingUrl(description) || extractMeetingUrl(location);
 
@@ -130,6 +155,8 @@ export function parseOutlookText(text: string): MeetingEvent | null {
 }
 
 export function parseIcs(raw: string): MeetingEvent {
+  if (!raw || raw.trim().length === 0) throw new Error("ICS file is empty.");
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const jcal: any = ICAL.parse(raw);
   const comp = new ICAL.Component(jcal);
@@ -171,7 +198,9 @@ export function parseIcs(raw: string): MeetingEvent {
     attendees.push(extractDisplayName(addr, params));
   });
 
-  const description = ((vevent.getFirstPropertyValue("description") as string | null) ?? "").trim();
+  const description = stripTeamsBoilerplate(
+    ((vevent.getFirstPropertyValue("description") as string | null) ?? "").trim()
+  );
   const location = ((vevent.getFirstPropertyValue("location") as string | null) ?? "").trim();
   const teamsUrl = (
     (vevent.getFirstPropertyValue("x-microsoft-skypeteamsmeetingurl") as string | null) ?? ""

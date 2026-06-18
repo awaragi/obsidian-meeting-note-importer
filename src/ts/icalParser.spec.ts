@@ -1,5 +1,59 @@
 import { describe, expect, it } from "vitest";
-import { parseOutlookText } from "./icalParser";
+import { parseIcs, parseOutlookText, stripTeamsBoilerplate } from "./icalParser";
+
+const SEPARATOR = "____________________________";
+
+describe("stripTeamsBoilerplate", () => {
+  it("returns text unchanged when no Teams boilerplate present", () => {
+    const text = "Hello All,\nLet us discuss the roadmap.";
+    expect(stripTeamsBoilerplate(text)).toBe(text);
+  });
+
+  it("strips English boilerplate preceded by separator", () => {
+    const text = `Useful notes here.\n\n${SEPARATOR}\nMicrosoft Teams meeting\nJoin: https://teams.microsoft.com/meet/abc`;
+    expect(stripTeamsBoilerplate(text)).toBe("Useful notes here.");
+  });
+
+  it("strips French boilerplate preceded by separator", () => {
+    const text = `Notes utiles.\n\n${SEPARATOR}\nRéunion Microsoft Teams\nRejoindre: https://teams.microsoft.com/meet/abc`;
+    expect(stripTeamsBoilerplate(text)).toBe("Notes utiles.");
+  });
+
+  it("strips Spanish boilerplate preceded by separator", () => {
+    const text = `Notas útiles.\n\n${SEPARATOR}\nReunión de Microsoft Teams\nUnirse: https://teams.microsoft.com/meet/abc`;
+    expect(stripTeamsBoilerplate(text)).toBe("Notas útiles.");
+  });
+
+  it("strips Teams header even without a preceding separator line", () => {
+    const text = `Useful notes here.\nMicrosoft Teams meeting\nJoin: https://teams.microsoft.com/meet/abc`;
+    expect(stripTeamsBoilerplate(text)).toBe("Useful notes here.");
+  });
+
+  it("strips when Teams header is the very first line", () => {
+    const text = `Microsoft Teams meeting\nJoin: https://teams.microsoft.com/meet/abc`;
+    expect(stripTeamsBoilerplate(text)).toBe("");
+  });
+
+  it("preserves content before the separator", () => {
+    const text = `Line one.\nLine two.\n\n${SEPARATOR}\nMicrosoft Teams meeting\nJoin: https://teams.microsoft.com/meet/abc`;
+    expect(stripTeamsBoilerplate(text)).toBe("Line one.\nLine two.");
+  });
+
+  it("ignores a separator not followed by a Teams header", () => {
+    const text = `Line one.\n${SEPARATOR}\nLine two.`;
+    expect(stripTeamsBoilerplate(text)).toBe(text);
+  });
+});
+
+describe("parseIcs", () => {
+  it("throws on empty string", () => {
+    expect(() => parseIcs("")).toThrow("ICS file is empty.");
+  });
+
+  it("throws on whitespace-only input", () => {
+    expect(() => parseIcs("   \n\t  ")).toThrow("ICS file is empty.");
+  });
+});
 
 describe("parseOutlookText", () => {
   const BASE =
