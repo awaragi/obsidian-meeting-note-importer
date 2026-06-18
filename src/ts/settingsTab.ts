@@ -133,7 +133,6 @@ export class IcalMeetingNotesSettingTab extends PluginSettingTab {
         text
           .setPlaceholder(t("settings.folder.placeholder"))
           .setValue(this.plugin.settings.notesFolder)
-          .setDisabled(this.plugin.settings.useActiveFolder)
           .onChange(async (value) => {
             this.plugin.settings.notesFolder = value.trim();
             await this.plugin.saveSettings();
