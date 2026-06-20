@@ -1,6 +1,6 @@
-import { App, Modal, Notice, Plugin } from "obsidian";
+import { App, Modal, Notice, Plugin, Setting, TFile } from "obsidian";
 import { parseIcs, parseOutlookText } from "./icalParser";
-import { createMeetingNote, resolveTargetFolder } from "./noteCreator";
+import { createMeetingNote, overrideMeetingNote, resolveTargetFolder } from "./noteCreator";
 import {
   DEFAULT_SETTINGS,
   IcalMeetingNotesSettings,
@@ -8,18 +8,29 @@ import {
 } from "./settingsTab";
 import { t, locale } from "./i18n";
 
+// ── Types ──────────────────────────────────────────────────────────────────
+
+interface OverrideOptions {
+  overrideNote: TFile | null;
+  renameNote: boolean;
+}
+
 // ── Drop Modal ─────────────────────────────────────────────────────────────
 
 class IcsDropModal extends Modal {
-  private onDrop: (e: DragEvent) => void;
-  private onFilePicked: (file: File) => void;
+  private onDrop: (e: DragEvent, opts: OverrideOptions) => void;
+  private onFilePicked: (file: File, opts: OverrideOptions) => void;
   private settings: IcalMeetingNotesSettings;
+
+  private activeFile: TFile | null = null;
+  private overrideNote = false;
+  private renameNote = false;
 
   constructor(
     app: App,
     settings: IcalMeetingNotesSettings,
-    onDrop: (e: DragEvent) => void,
-    onFilePicked: (file: File) => void
+    onDrop: (e: DragEvent, opts: OverrideOptions) => void,
+    onFilePicked: (file: File, opts: OverrideOptions) => void
   ) {
     super(app);
     this.settings = settings;
@@ -28,6 +39,10 @@ class IcsDropModal extends Modal {
   }
 
   onOpen() {
+    this.activeFile = this.app.workspace.getActiveFile();
+    this.overrideNote = false;
+    this.renameNote = false;
+
     const { contentEl } = this;
     contentEl.empty();
     contentEl.addClass("ical-modal");
@@ -52,9 +67,20 @@ class IcsDropModal extends Modal {
     zone.createEl("p", { cls: "ical-drop-hint", text: t("modal.drop_hint") });
 
     const folder = resolveTargetFolder(this.app, this.settings);
-    const locationEl = zone.createEl("p", { cls: "ical-save-location" });
-    locationEl.appendText(t("modal.save_to") + " ");
-    locationEl.createEl("strong", { text: folder || t("modal.vault_root") });
+    const saveToKey = this.settings.useActiveFolder ? "modal.save_to_active" : "modal.save_to";
+
+    // Save-to label (shown when override is OFF)
+    const saveToEl = zone.createEl("p", { cls: "ical-save-location" });
+    saveToEl.appendText(t(saveToKey) + " ");
+    saveToEl.createEl("strong", { text: folder || t("modal.vault_root") });
+
+    // Override label (shown when override is ON)
+    const overrideLabelEl = zone.createEl("p", { cls: "ical-save-location" });
+    overrideLabelEl.style.display = "none";
+    overrideLabelEl.appendText(t("modal.override_label") + ": ");
+    overrideLabelEl.createEl("strong", {
+      text: this.activeFile ? `${this.activeFile.basename}.md` : "",
+    });
 
     // Hidden file input for click-to-browse
     const fileInput = contentEl.createEl("input", {
@@ -64,8 +90,9 @@ class IcsDropModal extends Modal {
     fileInput.addEventListener("change", () => {
       const file = fileInput.files?.[0];
       if (file) {
+        const opts = this.buildOpts();
         this.close();
-        this.onFilePicked(file);
+        this.onFilePicked(file, opts);
       }
     });
 
@@ -85,9 +112,50 @@ class IcsDropModal extends Modal {
       e.preventDefault();
       e.stopPropagation();
       zone.removeClass("ical-drop-zone--over");
+      const opts = this.buildOpts();
       this.close();
-      this.onDrop(e);
+      this.onDrop(e, opts);
     });
+
+    // Override toggle (only when an active file exists)
+    if (this.activeFile) {
+      // renameRowContainer is assigned after the override Setting so it appears below in the DOM.
+      // The closure captures the variable by reference, so it's always defined when onChange fires.
+      let renameRowContainer!: HTMLDivElement;
+
+      new Setting(contentEl)
+        .setName(t("modal.override_toggle"))
+        .addToggle((toggle) => {
+          toggle.setValue(false).onChange((val) => {
+            this.overrideNote = val;
+            saveToEl.style.display = val ? "none" : "";
+            overrideLabelEl.style.display = val ? "" : "none";
+            renameRowContainer.style.display = val ? "" : "none";
+            if (!val) {
+              this.renameNote = false;
+              const renameToggleInput = renameRowContainer.querySelector<HTMLInputElement>("input[type=checkbox]");
+              if (renameToggleInput) renameToggleInput.checked = false;
+            }
+          });
+        });
+
+      renameRowContainer = contentEl.createDiv();
+      renameRowContainer.style.display = "none";
+      new Setting(renameRowContainer)
+        .setName(t("modal.rename_toggle"))
+        .addToggle((toggle) => {
+          toggle.setValue(false).onChange((val) => {
+            this.renameNote = val;
+          });
+        });
+    }
+  }
+
+  private buildOpts(): OverrideOptions {
+    return {
+      overrideNote: this.overrideNote ? this.activeFile : null,
+      renameNote: this.renameNote,
+    };
   }
 
   onClose() {
@@ -127,8 +195,8 @@ export default class IcalMeetingNotesPlugin extends Plugin {
     new IcsDropModal(
       this.app,
       this.settings,
-      (e) => this.handleDrop(e),
-      (file) => this.readFileAsText(file)
+      (e, opts) => this.handleDrop(e, opts),
+      (file, opts) => this.readFileAsText(file, opts)
     ).open();
   }
 
@@ -139,7 +207,7 @@ export default class IcalMeetingNotesPlugin extends Plugin {
    * 3. dataTransfer.getData("text/plain") — plain text that might be iCal
    * 4. dataTransfer.items with getAsFile() — alternative file accessor
    */
-  private handleDrop(e: DragEvent) {
+  private handleDrop(e: DragEvent, opts: OverrideOptions) {
     const dt = e.dataTransfer;
     if (!dt) {
       new Notice(t("notice.no_data"));
@@ -149,7 +217,7 @@ export default class IcalMeetingNotesPlugin extends Plugin {
     // 1. Files — standard .ics file drop (e.g. from Finder)
     for (const file of Array.from(dt.files)) {
       if (file.type === "text/calendar" || /\.(ics|ical)$/i.test(file.name) || file.size > 0) {
-        this.readFileAsText(file);
+        this.readFileAsText(file, opts);
         return;
       }
     }
@@ -159,7 +227,7 @@ export default class IcalMeetingNotesPlugin extends Plugin {
       if (item.kind === "file") {
         const file = item.getAsFile();
         if (file) {
-          this.readFileAsText(file);
+          this.readFileAsText(file, opts);
           return;
         }
       }
@@ -170,13 +238,13 @@ export default class IcalMeetingNotesPlugin extends Plugin {
       const text = dt.getData(mimeType);
       if (!text) continue;
       if (text.includes("BEGIN:VCALENDAR")) {
-        void this.processIcsContent(text, "dropped-event.ics");
+        void this.processIcsContent(text, "dropped-event.ics", opts);
         return;
       }
       // 4. Outlook for Mac plain-text summary (no BEGIN:VCALENDAR)
       const event = parseOutlookText(text);
       if (event) {
-        void this.processEvent(event);
+        void this.processEvent(event, opts);
         return;
       }
     }
@@ -184,17 +252,17 @@ export default class IcalMeetingNotesPlugin extends Plugin {
     new Notice(t("notice.no_calendar"));
   }
 
-  private readFileAsText(file: File) {
+  private readFileAsText(file: File, opts: OverrideOptions) {
     const reader = new FileReader();
     reader.onload = async (ev) => {
       const raw = ev.target?.result;
-      if (typeof raw === "string") await this.processIcsContent(raw, file.name);
+      if (typeof raw === "string") await this.processIcsContent(raw, file.name, opts);
     };
     reader.onerror = () => new Notice(t("notice.read_failed"));
     reader.readAsText(file, "utf-8");
   }
 
-  async processIcsContent(raw: string, sourceName: string) {
+  async processIcsContent(raw: string, sourceName: string, opts: OverrideOptions = { overrideNote: null, renameNote: false }) {
     let event;
     try {
       event = parseIcs(raw);
@@ -203,20 +271,27 @@ export default class IcalMeetingNotesPlugin extends Plugin {
       console.error("iCal Meeting Notes parse error:", err);
       return;
     }
-    await this.processEvent(event);
+    await this.processEvent(event, opts);
   }
 
-  async processEvent(event: import("./icalParser").MeetingEvent) {
+  async processEvent(event: import("./icalParser").MeetingEvent, opts: OverrideOptions = { overrideNote: null, renameNote: false }) {
     let note;
     try {
-      note = await createMeetingNote(this.app, event, this.settings);
+      if (opts.overrideNote) {
+        note = await overrideMeetingNote(this.app, event, this.settings, opts.overrideNote, opts.renameNote);
+      } else {
+        note = await createMeetingNote(this.app, event, this.settings);
+      }
     } catch (err) {
       new Notice(t("notice.create_failed", { err: String(err) }));
       console.error("iCal Meeting Notes create error:", err);
       return;
     }
 
-    new Notice(t("notice.note_created", { name: note.basename }));
+    const noticeKey = opts.overrideNote
+      ? opts.renameNote ? "notice.note_overridden_renamed" : "notice.note_overridden"
+      : "notice.note_created";
+    new Notice(t(noticeKey, { name: note.basename }));
     if (this.settings.openAfterCreate) {
       const leaf = this.app.workspace.getLeaf(false);
       await leaf.openFile(note);

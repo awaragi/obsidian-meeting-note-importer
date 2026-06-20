@@ -3,6 +3,7 @@
   "modal.drop_label": "Déposez un fichier .ics ici",
   "modal.drop_hint": "Faites glisser un événement depuis Outlook, ou cliquez pour parcourir vos fichiers .ics.",
   "modal.save_to": "Une nouvelle note de réunion sera créée dans",
+  "modal.save_to_active": "Une nouvelle note de réunion sera créée dans le dossier actif :",
   "modal.vault_root": "la racine du coffre",
   "ribbon.tooltip": "Importer une note de réunion",
   "command.name": "Importer une note de réunion depuis une invitation",
@@ -32,5 +33,11 @@
   "settings.notes_heading.name": "Titre des notes",
   "settings.notes_heading.desc": "Ligne de titre exacte sous laquelle l'URL de réunion et la description sont insérées.",
   "settings.open_after.name": "Ouvrir la note après création",
-  "settings.open_after.desc": "Ouvrir automatiquement la note de réunion nouvellement créée."
+  "settings.open_after.desc": "Ouvrir automatiquement la note de réunion nouvellement créée.",
+  "modal.override_toggle": "Remplacer la note actuelle",
+  "modal.rename_toggle": "Renommer aussi la note en conséquence",
+  "modal.override_label": "La réunion remplacera la note :",
+  "notice.override_conflict": "Meeting Note Importer : impossible de renommer — une autre note porte déjà ce nom.",
+  "notice.note_overridden": "Note de réunion remplacée : {{name}}",
+  "notice.note_overridden_renamed": "Note de réunion remplacée et renommée : {{name}}"
 }

@@ -90,6 +90,50 @@ async function ensureFolder(app: App, folderPath: string): Promise<void> {
   await app.vault.createFolder(folderPath);
 }
 
+export async function overrideMeetingNote(
+  app: App,
+  event: MeetingEvent,
+  settings: IcalMeetingNotesSettings,
+  targetFile: TFile,
+  rename: boolean
+): Promise<TFile> {
+  let raw = BUILTIN_TEMPLATE;
+  if (settings.templateFile) {
+    const tf = app.vault.getAbstractFileByPath(normalizePath(settings.templateFile));
+    if (tf instanceof TFile) raw = await app.vault.read(tf);
+  }
+
+  let content = raw.replace(/\{\{date\}\}/g, event.date).replace(/\{\{title\}\}/g, event.title);
+
+  const attendeesBlock = buildAttendeesBlock(event);
+  if (attendeesBlock)
+    content = injectUnderHeading(content, settings.attendeesHeading, attendeesBlock);
+
+  const notesBlock = buildNotesBlock(event);
+  if (notesBlock) content = injectUnderHeading(content, settings.notesHeading, notesBlock);
+
+  await app.vault.modify(targetFile, content);
+
+  if (!rename) return targetFile;
+
+  const newName = `${resolveNoteName(settings.noteNameTemplate, event)}.md`;
+  const folder = targetFile.parent?.path;
+  const newPath = folder && folder !== "/"
+    ? normalizePath(`${folder}/${newName}`)
+    : normalizePath(newName);
+
+  if (newPath === targetFile.path) return targetFile;
+
+  const conflict = app.vault.getAbstractFileByPath(newPath);
+  if (conflict instanceof TFile && conflict.path !== targetFile.path) {
+    new Notice(t("notice.override_conflict"));
+    return targetFile;
+  }
+
+  await app.fileManager.renameFile(targetFile, newPath);
+  return app.vault.getAbstractFileByPath(newPath) as TFile;
+}
+
 export async function createMeetingNote(
   app: App,
   event: MeetingEvent,
