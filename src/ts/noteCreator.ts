@@ -2,6 +2,7 @@ import { App, Notice, TFile, TFolder, normalizePath } from "obsidian";
 import { MeetingEvent } from "./icalParser";
 import { IcalMeetingNotesSettings } from "./settingsTab";
 import { t } from "./i18n";
+import { resolveNoteName } from "./noteNameResolver";
 
 const BUILTIN_TEMPLATE = `---
 title: "{{date}} - {{title}}"
@@ -94,8 +95,7 @@ export async function createMeetingNote(
   event: MeetingEvent,
   settings: IcalMeetingNotesSettings
 ): Promise<TFile> {
-  const safeTitle = event.title.replace(/[\\/:*?"<>|]/g, "-").trim();
-  const fileName = `${event.date} - ${safeTitle}.md`;
+  const fileName = `${resolveNoteName(settings.noteNameTemplate, event)}.md`;
   const resolved = resolveTargetFolder(app, settings);
   const folder = resolved ? normalizePath(resolved) : "";
   const filePath = folder ? normalizePath(`${folder}/${fileName}`) : normalizePath(fileName);

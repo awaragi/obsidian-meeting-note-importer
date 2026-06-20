@@ -17,6 +17,8 @@ export interface IcalMeetingNotesSettings {
   useActiveFolder: boolean;
   /** Vault path to an Obsidian template file. Empty = use built-in template. */
   templateFile: string;
+  /** Template for the note filename using {{placeholder}} syntax. Empty = use default. */
+  noteNameTemplate: string;
   /** The exact heading line under which attendees are injected. */
   attendeesHeading: string;
   /** The exact heading line under which the meeting URL + description are injected. */
@@ -29,6 +31,7 @@ export const DEFAULT_SETTINGS: IcalMeetingNotesSettings = {
   notesFolder: "",
   useActiveFolder: true,
   templateFile: "",
+  noteNameTemplate: "",
   attendeesHeading: "## Attendees",
   notesHeading: "## Invite Notes",
   openAfterCreate: true,
@@ -154,6 +157,34 @@ export class IcalMeetingNotesSettingTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           });
       });
+
+    new Setting(containerEl)
+      .setName(t("settings.note_name_template.name"))
+      .setDesc(t("settings.note_name_template.desc"))
+      .addText((text) =>
+        text
+          .setPlaceholder(t("settings.note_name_template.placeholder"))
+          .setValue(this.plugin.settings.noteNameTemplate)
+          .onChange(async (value) => {
+            this.plugin.settings.noteNameTemplate = value.trim();
+            await this.plugin.saveSettings();
+          })
+      );
+
+    const varRef = containerEl.createDiv({ cls: "ical-var-ref" });
+    varRef.createSpan({ text: t("settings.note_name_template.variables"), cls: "ical-var-ref__label" });
+    const varList = varRef.createEl("ul", { cls: "ical-var-ref__list" });
+    for (const [token, desc] of [
+      ["{{date}}", "event date"],
+      ["{{title}}", "meeting title"],
+      ["{{startTime}}", "start time"],
+      ["{{endTime}}", "end time"],
+      ["{{organizer}}", "organizer name or email (empty if not present)"],
+    ] as const) {
+      const li = varList.createEl("li");
+      li.createEl("code", { text: token });
+      li.createSpan({ text: ` — ${desc}` });
+    }
 
     new Setting(containerEl)
       .setName(t("settings.attendees_heading.name"))

@@ -95,3 +95,26 @@
   color: var(--text-muted);
   font-weight: 600;
 }
+
+.ical-var-ref {
+  padding: 8px 16px 8px 48px;
+  margin-bottom: 8px;
+}
+
+.ical-var-ref__label {
+  display: block;
+  font-size: 0.85em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.ical-var-ref__list {
+  margin: 0;
+  padding-left: 1.2em;
+  font-size: 0.85em;
+  color: var(--text-muted);
+}
+
+.ical-var-ref__list li {
+  margin: 2px 0;
+}

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { MeetingEvent } from "./icalParser";
+import { resolveNoteName, DEFAULT_NOTE_NAME_TEMPLATE } from "./noteNameResolver";
 
 // Re-export the private helpers via a thin test shim so we don't modify
 // noteCreator.ts's public API. Instead, we test through the exported shapes
@@ -177,5 +178,64 @@ describe("buildNotesBlock", () => {
   it("includes description alone when no url or location", () => {
     const event = { ...BASE_EVENT, meetingUrl: "", location: "", description: "Notes here" };
     expect(buildNotesBlock(event)).toBe("Notes here");
+  });
+});
+
+// ── resolveNoteName ────────────────────────────────────────────────────────
+
+describe("resolveNoteName", () => {
+  it("substitutes date and title with default template when empty", () => {
+    expect(resolveNoteName("", BASE_EVENT)).toBe("2026-06-15 - Team Sync");
+  });
+
+  it("substitutes date and title with whitespace-only template", () => {
+    expect(resolveNoteName("   ", BASE_EVENT)).toBe("2026-06-15 - Team Sync");
+  });
+
+  it("uses custom template with all five variables", () => {
+    const result = resolveNoteName("{{date}} {{startTime}}-{{endTime}} {{title}} ({{organizer}})", BASE_EVENT);
+    expect(result).toBe("2026-06-15 15-30-16-00 Team Sync (Alice Smith)");
+  });
+
+  it("substitutes startTime variable", () => {
+    expect(resolveNoteName("{{date}} {{startTime}} - {{title}}", BASE_EVENT)).toBe(
+      "2026-06-15 15-30 - Team Sync"
+    );
+  });
+
+  it("sanitizes forbidden characters in resolved name", () => {
+    const event = { ...BASE_EVENT, title: "Q2: Review & Plan" };
+    expect(resolveNoteName("{{date}} - {{title}}", event)).toBe("2026-06-15 - Q2- Review & Plan");
+  });
+
+  it("sanitizes forbidden chars introduced by the template itself", () => {
+    expect(resolveNoteName("{{date}}: {{title}}", BASE_EVENT)).toBe("2026-06-15- Team Sync");
+  });
+
+  it("resolves to empty organizer when not present and falls back gracefully", () => {
+    const event = { ...BASE_EVENT, organizer: "" };
+    expect(resolveNoteName("{{organizer}} - {{title}}", event)).toBe("- Team Sync");
+  });
+
+  it("falls back to Untitled Meeting with date when all variables resolve to empty", () => {
+    const event = { ...BASE_EVENT, organizer: "" };
+    expect(resolveNoteName("{{organizer}}", event)).toBe(`Untitled Meeting ${BASE_EVENT.date}`);
+  });
+
+  it("maps forbidden chars to dashes rather than falling back", () => {
+    // ":::" → "---" after sanitization — non-empty, so no fallback
+    expect(resolveNoteName(":::", BASE_EVENT)).toBe("---");
+  });
+
+  it("falls back to Untitled Meeting with date when result is blank after trim", () => {
+    // A template of spaces is treated as empty → uses default (covered above).
+    // The blank-result fallback fires when a non-empty template resolves to pure whitespace.
+    const event = { ...BASE_EVENT, organizer: "  " };
+    // organizer is "  " (spaces only) → resolved is "  " → after trim is "" → fallback
+    expect(resolveNoteName("{{organizer}}", event)).toBe(`Untitled Meeting ${event.date}`);
+  });
+
+  it("DEFAULT_NOTE_NAME_TEMPLATE matches expected value", () => {
+    expect(DEFAULT_NOTE_NAME_TEMPLATE).toBe("{{date}} - {{title}}");
   });
 });
