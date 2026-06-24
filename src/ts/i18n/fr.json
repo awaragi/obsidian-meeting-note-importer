@@ -34,9 +34,12 @@
   "settings.notes_heading.desc": "Ligne de titre exacte sous laquelle l'URL de réunion et la description sont insérées.",
   "settings.open_after.name": "Ouvrir la note après création",
   "settings.open_after.desc": "Ouvrir automatiquement la note de réunion nouvellement créée.",
+  "settings.override_rename_default.name": "Renommer la note par défaut lors du remplacement",
+  "settings.override_rename_default.desc": "Lors du remplacement de la note actuelle, activer automatiquement le renommage pour que le fichier soit renommé selon la réunion.",
   "modal.override_toggle": "Remplacer la note actuelle",
   "modal.rename_toggle": "Renommer aussi la note en conséquence",
-  "modal.override_label": "La réunion remplacera la note :",
+  "modal.override_content_label": "Remplacement du contenu de",
+  "modal.override_rename_label": "Remplacement de la note",
   "notice.override_conflict": "Meeting Note Importer : impossible de renommer — une autre note porte déjà ce nom.",
   "notice.note_overridden": "Note de réunion remplacée : {{name}}",
   "notice.note_overridden_renamed": "Note de réunion remplacée et renommée : {{name}}"

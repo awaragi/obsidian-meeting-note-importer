@@ -131,7 +131,9 @@ export async function overrideMeetingNote(
   }
 
   await app.fileManager.renameFile(targetFile, newPath);
-  return app.vault.getAbstractFileByPath(newPath) as TFile;
+  const renamed = app.vault.getAbstractFileByPath(newPath);
+  if (!(renamed instanceof TFile)) throw new Error(`Renamed file not found: ${newPath}`);
+  return renamed;
 }
 
 export async function createMeetingNote(

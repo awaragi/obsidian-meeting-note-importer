@@ -25,6 +25,8 @@ export interface IcalMeetingNotesSettings {
   notesHeading: string;
   /** Open the created note immediately after creation. */
   openAfterCreate: boolean;
+  /** When true, the rename toggle in the override modal initialises to ON by default. */
+  overrideRenameDefault: boolean;
 }
 
 export const DEFAULT_SETTINGS: IcalMeetingNotesSettings = {
@@ -35,6 +37,7 @@ export const DEFAULT_SETTINGS: IcalMeetingNotesSettings = {
   attendeesHeading: "## Attendees",
   notesHeading: "## Invite Notes",
   openAfterCreate: true,
+  overrideRenameDefault: false,
 };
 
 // ── Folder suggest ─────────────────────────────────────────────────────────
@@ -65,7 +68,7 @@ class FolderSuggest extends AbstractInputSuggest<TFolder> {
   selectSuggestion(folder: TFolder) {
     const value = folder.isRoot() ? "" : folder.path;
     this.setValue(value);
-    this.selectCallback(value);
+    void this.selectCallback(value);
     this.close();
   }
 }
@@ -94,7 +97,7 @@ class FileSuggest extends AbstractInputSuggest<TFile> {
 
   selectSuggestion(file: TFile) {
     this.setValue(file.path);
-    this.selectCallback(file.path);
+    void this.selectCallback(file.path);
     this.close();
   }
 }
@@ -218,6 +221,16 @@ export class IcalMeetingNotesSettingTab extends PluginSettingTab {
       .addToggle((toggle) =>
         toggle.setValue(this.plugin.settings.openAfterCreate).onChange(async (value) => {
           this.plugin.settings.openAfterCreate = value;
+          await this.plugin.saveSettings();
+        })
+      );
+
+    new Setting(containerEl)
+      .setName(t("settings.override_rename_default.name"))
+      .setDesc(t("settings.override_rename_default.desc"))
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.overrideRenameDefault).onChange(async (value) => {
+          this.plugin.settings.overrideRenameDefault = value;
           await this.plugin.saveSettings();
         })
       );

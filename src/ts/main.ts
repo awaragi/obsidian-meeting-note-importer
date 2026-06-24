@@ -71,13 +71,14 @@ class IcsDropModal extends Modal {
 
     // Save-to label (shown when override is OFF)
     const saveToEl = zone.createEl("p", { cls: "ical-save-location" });
-    saveToEl.appendText(t(saveToKey) + " ");
+    saveToEl.appendText(t(saveToKey));
     saveToEl.createEl("strong", { text: folder || t("modal.vault_root") });
 
     // Override label (shown when override is ON)
     const overrideLabelEl = zone.createEl("p", { cls: "ical-save-location" });
-    overrideLabelEl.style.display = "none";
-    overrideLabelEl.appendText(t("modal.override_label") + ": ");
+    overrideLabelEl.addClass("ical-hidden");
+    const overrideLabelText = overrideLabelEl.createSpan();
+    overrideLabelText.setText(t("modal.override_content_label"));
     overrideLabelEl.createEl("strong", {
       text: this.activeFile ? `${this.activeFile.basename}.md` : "",
     });
@@ -119,33 +120,35 @@ class IcsDropModal extends Modal {
 
     // Override toggle (only when an active file exists)
     if (this.activeFile) {
-      // renameRowContainer is assigned after the override Setting so it appears below in the DOM.
-      // The closure captures the variable by reference, so it's always defined when onChange fires.
+      // Both renameRowContainer and renameToggle are assigned after their respective Settings
+      // but are always defined by the time onChange fires (captured by reference).
       let renameRowContainer!: HTMLDivElement;
+      let renameToggle!: { setValue: (v: boolean) => unknown };
 
       new Setting(contentEl)
         .setName(t("modal.override_toggle"))
         .addToggle((toggle) => {
           toggle.setValue(false).onChange((val) => {
             this.overrideNote = val;
-            saveToEl.style.display = val ? "none" : "";
-            overrideLabelEl.style.display = val ? "" : "none";
-            renameRowContainer.style.display = val ? "" : "none";
-            if (!val) {
-              this.renameNote = false;
-              const renameToggleInput = renameRowContainer.querySelector<HTMLInputElement>("input[type=checkbox]");
-              if (renameToggleInput) renameToggleInput.checked = false;
-            }
+            saveToEl.toggleClass("ical-hidden", val);
+            overrideLabelEl.toggleClass("ical-hidden", !val);
+            renameRowContainer.toggleClass("ical-hidden", !val);
+            const seedRename = val ? this.settings.overrideRenameDefault : false;
+            this.renameNote = seedRename;
+            renameToggle.setValue(seedRename);
+            overrideLabelText.setText(seedRename ? t("modal.override_rename_label") : t("modal.override_content_label"));
           });
         });
 
       renameRowContainer = contentEl.createDiv();
-      renameRowContainer.style.display = "none";
+      renameRowContainer.addClass("ical-hidden");
       new Setting(renameRowContainer)
         .setName(t("modal.rename_toggle"))
         .addToggle((toggle) => {
+          renameToggle = toggle;
           toggle.setValue(false).onChange((val) => {
             this.renameNote = val;
+            overrideLabelText.setText(val ? t("modal.override_rename_label") : t("modal.override_content_label"));
           });
         });
     }

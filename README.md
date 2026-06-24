@@ -10,6 +10,8 @@ An Obsidian plugin that creates structured meeting notes from calendar invites �
 - Populates title, date, attendees, organizer, location, meeting URL, and description automatically
 - Skips duplicate notes — if a note for that meeting already exists it is returned without overwriting
 - Supports a custom Obsidian template with `{{date}}` and `{{title}}` placeholders
+- Configurable note name template with `{{date}}`, `{{title}}`, `{{startTime}}`, `{{endTime}}`, and `{{organizer}}` placeholders
+- **Override current note** — when a file is open, optionally write the meeting content into that file instead of creating a new one; a secondary toggle also renames the file to match the meeting
 - Configurable target folder and heading names for attendees and notes sections
 - Localised UI in English, French, and Spanish — automatically follows Obsidian's language setting
 
@@ -57,6 +59,7 @@ tags:
 | Save in active folder | On | Save the note in the folder of the currently open file |
 | Fallback notes folder | _(vault root)_ | Folder used when active-folder is off, or no file is open |
 | Template file | _(built-in)_ | Path to a custom Obsidian template |
+| Note name template | `{{date}} - {{title}}` | Filename template — supports `{{date}}`, `{{title}}`, `{{startTime}}`, `{{endTime}}`, `{{organizer}}` |
 | Attendees heading | `## Attendees` | Heading under which attendees are injected |
 | Notes heading | `## Invite Notes` | Heading under which the meeting URL and description are injected |
 | Open note after creation | On | Automatically open the note after it is created |
@@ -128,11 +131,29 @@ To get a `.ics` file from Outlook for Mac: right-click a calendar event → **Ex
 
 ### Releases
 
-Push a version tag to trigger a GitHub Actions build and draft release:
+1. **Prepare the version bump** — choose `patch`, `minor`, or `major`:
 
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
+   ```bash
+   npm run release:prepare patch
+   ```
 
-The release will contain `main.js`, `manifest.json`, and `styles.css` as flat assets ready for manual installation.
+   This updates `package.json` and `manifest.json`. Commit the result:
+
+   ```bash
+   git add package.json manifest.json
+   git commit -m "chore: bump version to X.Y.Z"
+   ```
+
+   Or do both in one step with the `--commit` flag:
+
+   ```bash
+   npm run release:prepare -- patch --commit
+   ```
+
+2. **Publish** — pushes the branch, tags the commit, and pushes the tag:
+
+   ```bash
+   npm run release
+   ```
+
+   GitHub Actions picks up the tag, builds the plugin, runs tests, and creates a release containing `main.js`, `manifest.json`, and `styles.css` as flat assets ready for manual installation.

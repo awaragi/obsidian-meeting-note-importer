@@ -34,9 +34,12 @@
   "settings.notes_heading.desc": "Exact heading line under which the meeting URL and description are injected.",
   "settings.open_after.name": "Open note after creation",
   "settings.open_after.desc": "Automatically open the newly created meeting note.",
+  "settings.override_rename_default.name": "Rename note by default when overriding",
+  "settings.override_rename_default.desc": "When overriding the current note, automatically enable the rename toggle so the file is also renamed to match the meeting.",
   "modal.override_toggle": "Override current note",
   "modal.rename_toggle": "Also rename the note accordingly",
-  "modal.override_label": "The meeting will override the note:",
+  "modal.override_content_label": "Replacing content of",
+  "modal.override_rename_label": "Replacing note",
   "notice.override_conflict": "Meeting Note Importer: cannot rename — a different note already has that name.",
   "notice.note_overridden": "Meeting note overridden: {{name}}",
   "notice.note_overridden_renamed": "Meeting note overridden and renamed: {{name}}"

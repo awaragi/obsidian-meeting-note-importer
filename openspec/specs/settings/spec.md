@@ -27,6 +27,8 @@ template is used, and how note sections are structured.
 | attendeesHeading | string | The exact markdown heading line under which attendee names are injected into the note. |
 | notesHeading | string | The exact markdown heading line under which the meeting URL and description are injected into the note. |
 | openAfterCreate | boolean | When true, the newly created meeting note is opened in the editor immediately after creation. |
+| noteNameTemplate | string | Template string for the generated note filename. Uses {{placeholder}} syntax ({{date}}, {{title}}, {{startTime}}, {{endTime}}, {{organizer}}). Empty string means use the default `{{date}} - {{title}}` pattern. |
+| overrideRenameDefault | boolean | When true, the rename toggle in the override modal initialises to ON whenever the override toggle is enabled. Defaults to false. |
 
 **Relationships:**
 
@@ -1474,6 +1476,21 @@ The block SHALL include:
 #### Scenario: Reference block is always visible
 - **WHEN** the settings tab is open
 - **THEN** the variable reference block is visible below the note name template input regardless of the current field value
+
+### Requirement: OverrideRenameDefaultSetting
+The system SHALL include an `overrideRenameDefault` boolean field in `IcalMeetingNotesSettings`, defaulting to `false`. The settings UI SHALL render a toggle for this field with a localised name and description. When `true`, the "Also rename the note accordingly" toggle in the import modal initialises to ON whenever the override toggle is enabled.
+
+#### Scenario: DefaultValueIsFalse
+- **WHEN** no stored value exists for `overrideRenameDefault` (first install or missing key)
+- **THEN** the field resolves to `false` via `DEFAULT_SETTINGS` merge
+
+#### Scenario: SettingPersistedAndRestored
+- **WHEN** the user enables the toggle in settings and reloads Obsidian
+- **THEN** `overrideRenameDefault` is `true` on the next plugin load
+
+#### Scenario: ToggleRenderedInSettingsTab
+- **WHEN** the settings tab is opened
+- **THEN** a toggle labelled with the i18n key `settings.override_rename_default.name` is visible, with description `settings.override_rename_default.desc`
 
 ## Technical Notes
 
