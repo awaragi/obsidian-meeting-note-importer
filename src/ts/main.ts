@@ -42,6 +42,7 @@ class IcsDropModal extends Modal {
   private onFilePicked: (file: File, opts: OverrideOptions) => void;
   private onManualCreate: (event: MeetingEvent, opts: OverrideOptions) => void;
   private settings: IcalMeetingNotesSettings;
+  private initialTab: "file" | "manual";
 
   private activeFile: TFile | null = null;
   private overrideNote = false;
@@ -52,13 +53,15 @@ class IcsDropModal extends Modal {
     settings: IcalMeetingNotesSettings,
     onDrop: (e: DragEvent, opts: OverrideOptions) => void,
     onFilePicked: (file: File, opts: OverrideOptions) => void,
-    onManualCreate: (event: MeetingEvent, opts: OverrideOptions) => void
+    onManualCreate: (event: MeetingEvent, opts: OverrideOptions) => void,
+    initialTab: "file" | "manual" = "file"
   ) {
     super(app);
     this.settings = settings;
     this.onDrop = onDrop;
     this.onFilePicked = onFilePicked;
     this.onManualCreate = onManualCreate;
+    this.initialTab = initialTab;
   }
 
   onOpen() {
@@ -99,6 +102,15 @@ class IcsDropModal extends Modal {
       panelFile.addClass("ical-tab-panel--hidden");
       manualTitleInput.focus();
     });
+
+    // Activate the initial tab if requested
+    if (this.initialTab === "manual") {
+      tabManual.addClass("ical-tab--active");
+      tabFile.removeClass("ical-tab--active");
+      panelManual.removeClass("ical-tab-panel--hidden");
+      panelFile.addClass("ical-tab-panel--hidden");
+      setTimeout(() => manualTitleInput.focus(), 0);
+    }
 
     // ── Shared section ───────────────────────────────────────────────────
     // Declare before the if-block so onChange closures can capture them.
@@ -299,14 +311,22 @@ export default class IcalMeetingNotesPlugin extends Plugin {
     await this.loadSettings();
     this.addSettingTab(new IcalMeetingNotesSettingTab(this.app, this));
 
-    this.addRibbonIcon("calendar-plus", t("ribbon.tooltip"), () => {
-      this.openDropModal();
-    });
+    if (this.settings.showRibbonIcon) {
+      this.addRibbonIcon("calendar-plus", t("ribbon.tooltip"), () => {
+        this.openDropModal();
+      });
+    }
 
     this.addCommand({
       id: "import-ics-meeting-note",
       name: t("command.name"),
       callback: () => this.openDropModal(),
+    });
+
+    this.addCommand({
+      id: "new-quick-meeting-note",
+      name: t("command.quick_name"),
+      callback: () => this.openDropModal("manual"),
     });
   }
 
@@ -318,13 +338,14 @@ export default class IcalMeetingNotesPlugin extends Plugin {
     await this.saveData(this.settings);
   }
 
-  private openDropModal() {
+  private openDropModal(initialTab: "file" | "manual" = "file") {
     new IcsDropModal(
       this.app,
       this.settings,
       (e, opts) => this.handleDrop(e, opts),
       (file, opts) => this.readFileAsText(file, opts),
-      (event, opts) => void this.processEvent(event, opts)
+      (event, opts) => void this.processEvent(event, opts),
+      initialTab
     ).open();
   }
 

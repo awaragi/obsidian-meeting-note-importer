@@ -108,9 +108,7 @@ an event. Bridges between iCal time representation and JavaScript Date.
 **Relationships:**
 
 - belongs to CalendarProperty (CalendarTime is the resolved value of date/time-typed CalendarProperty instances such as DTSTART and DTEND)
-
 ## Requirements
-
 ### Requirement: IcalMeetingNotesSettingsValidation
 
 The system SHALL validate IcalMeetingNotesSettings according to these rules:
@@ -472,6 +470,90 @@ The system SHALL creates an obsidian note from a meetingevent via createmeetingn
 - **WHEN** processEvent is called
 - **THEN** A Notice is shown with the error message and no note is opened
 
+### Requirement: Note name template setting field
+The settings interface SHALL include a `noteNameTemplate` string field. The settings UI SHALL render a text input for this field with:
+- Label and description (i18n)
+- Placeholder text showing the default template (`{{date}} - {{title}}`) so users understand what an empty value means
+- A read-only reference block listing all supported variables and their formats immediately below the input
+
+#### Scenario: Setting persists across plugin reloads
+- **WHEN** the user enters `{{date}} {{startTime}} - {{title}}` and saves
+- **THEN** on next plugin load the field value is `{{date}} {{startTime}} - {{title}}`
+
+#### Scenario: Empty value shows placeholder
+- **WHEN** `noteNameTemplate` is `""` (default)
+- **THEN** the text input shows the placeholder `{{date}} - {{title}}` (greyed out, not saved as a value)
+
+### Requirement: Variable reference displayed in settings
+The settings UI SHALL display a descriptive block beneath the note name template input that lists all available `{{placeholder}}` variables, their meaning, and the format of date and time values.
+
+The block SHALL include:
+- `{{date}}` — date in `YYYY-MM-DD` format (local timezone)
+- `{{title}}` — meeting title
+- `{{startTime}}` — start time in `HH:mm` 24-hour format (local timezone)
+- `{{endTime}}` — end time in `HH:mm` 24-hour format (local timezone)
+- `{{organizer}}` — organizer name or email (empty if not present)
+
+#### Scenario: Reference block is always visible
+- **WHEN** the settings tab is open
+- **THEN** the variable reference block is visible below the note name template input regardless of the current field value
+
+### Requirement: OverrideRenameDefaultSetting
+The system SHALL include an `overrideRenameDefault` boolean field in `IcalMeetingNotesSettings`, defaulting to `false`. The settings UI SHALL render a toggle for this field with a localised name and description. When `true`, the "Also rename the note accordingly" toggle in the import modal initialises to ON whenever the override toggle is enabled.
+
+#### Scenario: DefaultValueIsFalse
+- **WHEN** no stored value exists for `overrideRenameDefault` (first install or missing key)
+- **THEN** the field resolves to `false` via `DEFAULT_SETTINGS` merge
+
+#### Scenario: SettingPersistedAndRestored
+- **WHEN** the user enables the toggle in settings and reloads Obsidian
+- **THEN** `overrideRenameDefault` is `true` on the next plugin load
+
+#### Scenario: ToggleRenderedInSettingsTab
+- **WHEN** the settings tab is opened
+- **THEN** a toggle labelled with the i18n key `settings.override_rename_default.name` is visible, with description `settings.override_rename_default.desc`
+
+### Requirement: TimeIncrementSetting
+The system SHALL add a `timeIncrement` field to `IcalMeetingNotesSettings` with type `15 | 30 | 60` (minutes) and a default value of `30`. The settings UI SHALL render a dropdown for this field with options 15, 30, and 60 minutes, with localised label and description.
+
+#### Scenario: DefaultValueIsThirtyMinutes
+- **WHEN** no stored value exists for `timeIncrement` (first install or missing key)
+- **THEN** the field resolves to `30` via `DEFAULT_SETTINGS` merge
+
+#### Scenario: SettingPersistedAndRestored
+- **WHEN** the user selects 15 minutes in settings and reloads Obsidian
+- **THEN** `timeIncrement` is `15` on the next plugin load
+
+#### Scenario: DropdownRenderedInSettingsTab
+- **WHEN** the settings tab is opened
+- **THEN** a dropdown labelled with the i18n key `settings.time_increment.name` is visible with options 15, 30, and 60
+
+#### Scenario: IncrementDrivesStartTimeRounding
+- **WHEN** `timeIncrement` is `15` and the current time is 10:22
+- **THEN** the manual entry start time defaults to 10:30 (nearest 15-minute boundary)
+
+#### Scenario: IncrementDrivesEndTimeDefault
+- **WHEN** `timeIncrement` is `30` and start time is 10:00
+- **THEN** end time defaults to 10:30
+
+### Requirement: ShowRibbonIconSetting
+The system SHALL add a `showRibbonIcon` boolean field to `IcalMeetingNotesSettings` with a default value of `true`. The settings UI SHALL render a toggle for this field with localised name and description. The ribbon icon SHALL only be registered during `onload()` when `showRibbonIcon` is `true`. Changing the setting takes effect after Obsidian reloads the plugin.
+
+#### Scenario: DefaultIsTrue
+- **WHEN** no stored value exists for `showRibbonIcon` (first install or missing key)
+- **THEN** the field resolves to `true` via `DEFAULT_SETTINGS` merge and the ribbon icon is shown
+
+#### Scenario: RibbonHiddenWhenFalse
+- **WHEN** `showRibbonIcon` is `false` and the plugin loads
+- **THEN** `addRibbonIcon` is not called and no ribbon icon appears
+
+#### Scenario: RibbonShownWhenTrue
+- **WHEN** `showRibbonIcon` is `true` and the plugin loads
+- **THEN** `addRibbonIcon` is called and the calendar-plus ribbon icon is visible
+
+#### Scenario: ToggleRenderedAtTopOfSettingsTab
+- **WHEN** the settings tab is opened
+- **THEN** a toggle labelled with i18n key `settings.show_ribbon.name` is the first control rendered, immediately after the section heading
 
 ## Sub-components
 
@@ -983,7 +1065,6 @@ The system SHALL remove the specified css class from zone to restore its default
 - **WHEN** zone.removeClass is called with the drag-over class name during a drop event
 - **THEN** zone loses the drag-over class after the file is dropped
 
-
 ## Sub-components
 
 > `IcalMeetingNotesPlugin` is an orchestrator. Each sub-component below implements one logical block.
@@ -1448,49 +1529,6 @@ The system SHALL remove the drag-active class from zone when the dragged item le
 - **GIVEN** zone does not have the target class
 - **WHEN** removeClass is called
 - **THEN** no error is thrown and zone's classList is unchanged
-
-### Requirement: Note name template setting field
-The settings interface SHALL include a `noteNameTemplate` string field. The settings UI SHALL render a text input for this field with:
-- Label and description (i18n)
-- Placeholder text showing the default template (`{{date}} - {{title}}`) so users understand what an empty value means
-- A read-only reference block listing all supported variables and their formats immediately below the input
-
-#### Scenario: Setting persists across plugin reloads
-- **WHEN** the user enters `{{date}} {{startTime}} - {{title}}` and saves
-- **THEN** on next plugin load the field value is `{{date}} {{startTime}} - {{title}}`
-
-#### Scenario: Empty value shows placeholder
-- **WHEN** `noteNameTemplate` is `""` (default)
-- **THEN** the text input shows the placeholder `{{date}} - {{title}}` (greyed out, not saved as a value)
-
-### Requirement: Variable reference displayed in settings
-The settings UI SHALL display a descriptive block beneath the note name template input that lists all available `{{placeholder}}` variables, their meaning, and the format of date and time values.
-
-The block SHALL include:
-- `{{date}}` — date in `YYYY-MM-DD` format (local timezone)
-- `{{title}}` — meeting title
-- `{{startTime}}` — start time in `HH:mm` 24-hour format (local timezone)
-- `{{endTime}}` — end time in `HH:mm` 24-hour format (local timezone)
-- `{{organizer}}` — organizer name or email (empty if not present)
-
-#### Scenario: Reference block is always visible
-- **WHEN** the settings tab is open
-- **THEN** the variable reference block is visible below the note name template input regardless of the current field value
-
-### Requirement: OverrideRenameDefaultSetting
-The system SHALL include an `overrideRenameDefault` boolean field in `IcalMeetingNotesSettings`, defaulting to `false`. The settings UI SHALL render a toggle for this field with a localised name and description. When `true`, the "Also rename the note accordingly" toggle in the import modal initialises to ON whenever the override toggle is enabled.
-
-#### Scenario: DefaultValueIsFalse
-- **WHEN** no stored value exists for `overrideRenameDefault` (first install or missing key)
-- **THEN** the field resolves to `false` via `DEFAULT_SETTINGS` merge
-
-#### Scenario: SettingPersistedAndRestored
-- **WHEN** the user enables the toggle in settings and reloads Obsidian
-- **THEN** `overrideRenameDefault` is `true` on the next plugin load
-
-#### Scenario: ToggleRenderedInSettingsTab
-- **WHEN** the settings tab is opened
-- **THEN** a toggle labelled with the i18n key `settings.override_rename_default.name` is visible, with description `settings.override_rename_default.desc`
 
 ## Technical Notes
 

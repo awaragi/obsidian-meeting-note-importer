@@ -6,7 +6,8 @@
   "modal.save_to_active": "Enregistrer dans",
   "modal.vault_root": "la racine du coffre",
   "ribbon.tooltip": "Importer une note de réunion",
-  "command.name": "Importer une note de réunion depuis une invitation",
+  "command.name": "Créer une note de réunion depuis un fichier",
+  "command.quick_name": "Nouvelle note de réunion rapide",
   "notice.no_data": "Meeting Note Importer : aucune donnée dans le dépôt.",
   "notice.no_calendar": "Meeting Note Importer : impossible d'extraire les données de calendrier du dépôt.",
   "notice.read_failed": "Meeting Note Importer : échec de la lecture du fichier.",
@@ -52,5 +53,7 @@
   "modal.manual_end_label": "Fin",
   "modal.manual_create_button": "Créer",
   "settings.time_increment.name": "Incrément de temps",
-  "settings.time_increment.desc": "Durée par défaut pour les saisies manuelles et l'arrondi de l'heure de début"
+  "settings.time_increment.desc": "Durée par défaut pour les saisies manuelles et l'arrondi de l'heure de début",
+  "settings.show_ribbon.name": "Afficher l'icône dans le ruban",
+  "settings.show_ribbon.desc": "Affiche l'icône de calendrier dans la barre de ruban. Prend effet après le rechargement d'Obsidian."
 }

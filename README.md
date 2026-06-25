@@ -1,12 +1,13 @@
 # Meeting Note Importer
 
-An Obsidian plugin that creates structured meeting notes from calendar invites — drop a `.ics` file or drag a meeting directly from Outlook into Obsidian.
+An Obsidian plugin that creates structured meeting notes from calendar invites — drop a `.ics` file, drag a meeting directly from Outlook, or enter meeting details manually.
 
 ## Features
 
 - **Drag and drop a `.ics` file** from Finder, Explorer, or any file manager
 - **Drag a meeting directly from Outlook for Mac** — no file export needed
 - **Click to browse** for a `.ics` file via the file picker
+- **Quick/manual entry** — create a note by typing a title and picking a date and time, no file needed
 - Populates title, date, attendees, organizer, location, meeting URL, and description automatically
 - Skips duplicate notes — if a note for that meeting already exists it is returned without overwriting
 - Supports a custom Obsidian template with `{{date}}` and `{{title}}` placeholders
@@ -19,11 +20,21 @@ An Obsidian plugin that creates structured meeting notes from calendar invites �
 
 ## Usage
 
-Click the **calendar** icon in the ribbon, or run the command **Import meeting note from calendar invite**, then:
+### From a calendar file
+
+Click the **calendar** icon in the ribbon, or run the command **Create meeting note from file**, then:
 
 - Drag a `.ics` file into the drop zone, or
 - Drag a meeting event directly from Outlook for Mac, or
 - Click the drop zone to browse for a `.ics` file
+
+### Quick/manual entry
+
+Run the command **New quick meeting note** (or assign it a hotkey in Settings → Hotkeys) to open the modal directly on the **Quick/Manual Entry** tab. Enter a title, adjust the date and times if needed, and press **Create** (or hit Enter in the title field).
+
+- Date defaults to today
+- Start time defaults to the current time rounded to the nearest time increment
+- End time defaults to start + one increment
 
 The plugin creates a note in the configured folder and opens it immediately.
 
@@ -56,6 +67,7 @@ tags:
 
 | Setting | Default | Description |
 |---|---|---|
+| Show ribbon icon | On | Show the calendar icon in the ribbon bar. Change takes effect after reloading Obsidian. |
 | Save in active folder | On | Save the note in the folder of the currently open file |
 | Fallback notes folder | _(vault root)_ | Folder used when active-folder is off, or no file is open |
 | Template file | _(built-in)_ | Path to a custom Obsidian template |
@@ -63,6 +75,8 @@ tags:
 | Attendees heading | `## Attendees` | Heading under which attendees are injected |
 | Notes heading | `## Invite Notes` | Heading under which the meeting URL and description are injected |
 | Open note after creation | On | Automatically open the note after it is created |
+| Rename note by default when overriding | Off | Pre-enable the rename toggle when the override toggle is turned on |
+| Time increment | 30 min | Step size used for quick-entry time defaults and start-time rounding (15, 30, or 60 min) |
 
 ## Localisation
 

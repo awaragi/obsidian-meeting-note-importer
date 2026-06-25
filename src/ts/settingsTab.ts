@@ -29,6 +29,8 @@ export interface IcalMeetingNotesSettings {
   overrideRenameDefault: boolean;
   /** Default meeting duration in minutes for manual entry and start-time rounding. */
   timeIncrement: 15 | 30 | 60;
+  /** When false, the ribbon icon is not registered on plugin load. */
+  showRibbonIcon: boolean;
 }
 
 export const DEFAULT_SETTINGS: IcalMeetingNotesSettings = {
@@ -41,6 +43,7 @@ export const DEFAULT_SETTINGS: IcalMeetingNotesSettings = {
   openAfterCreate: true,
   overrideRenameDefault: false,
   timeIncrement: 30,
+  showRibbonIcon: true,
 };
 
 // ── Folder suggest ─────────────────────────────────────────────────────────
@@ -119,6 +122,16 @@ export class IcalMeetingNotesSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
     new Setting(containerEl).setName(t("settings.heading")).setHeading();
+
+    new Setting(containerEl)
+      .setName(t("settings.show_ribbon.name"))
+      .setDesc(t("settings.show_ribbon.desc"))
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.showRibbonIcon).onChange(async (value) => {
+          this.plugin.settings.showRibbonIcon = value;
+          await this.plugin.saveSettings();
+        })
+      );
 
     new Setting(containerEl)
       .setName(t("settings.active_folder.name"))

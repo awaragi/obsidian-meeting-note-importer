@@ -6,7 +6,8 @@
   "modal.save_to_active": "Save to",
   "modal.vault_root": "vault root",
   "ribbon.tooltip": "Import meeting note",
-  "command.name": "Import meeting note from calendar invite",
+  "command.name": "Create meeting note from file",
+  "command.quick_name": "New quick meeting note",
   "notice.no_data": "Meeting Note Importer: no data in the drop.",
   "notice.no_calendar": "Meeting Note Importer: could not extract calendar data from the drop.",
   "notice.read_failed": "Meeting Note Importer: failed to read the file.",
@@ -52,5 +53,7 @@
   "modal.manual_end_label": "End",
   "modal.manual_create_button": "Create",
   "settings.time_increment.name": "Time increment",
-  "settings.time_increment.desc": "Default duration for manual meeting entries and start-time rounding"
+  "settings.time_increment.desc": "Default duration for manual meeting entries and start-time rounding",
+  "settings.show_ribbon.name": "Show ribbon icon",
+  "settings.show_ribbon.desc": "Display the calendar icon in the ribbon bar. Takes effect after reloading Obsidian."
 }
