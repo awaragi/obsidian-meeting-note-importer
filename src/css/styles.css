@@ -117,8 +117,8 @@
   white-space: nowrap;
 }
 
-.ical-hidden {
-  display: none !important;
+.ical-modal .ical-hidden {
+  display: none;
 }
 
 .ical-var-ref {

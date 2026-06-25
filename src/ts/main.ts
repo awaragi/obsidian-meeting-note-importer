@@ -109,7 +109,7 @@ class IcsDropModal extends Modal {
       tabFile.removeClass("ical-tab--active");
       panelManual.removeClass("ical-tab-panel--hidden");
       panelFile.addClass("ical-tab-panel--hidden");
-      setTimeout(() => manualTitleInput.focus(), 0);
+      window.setTimeout(() => manualTitleInput.focus(), 0);
     }
 
     // ── Shared section ───────────────────────────────────────────────────
