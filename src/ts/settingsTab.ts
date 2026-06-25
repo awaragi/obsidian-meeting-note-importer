@@ -27,6 +27,8 @@ export interface IcalMeetingNotesSettings {
   openAfterCreate: boolean;
   /** When true, the rename toggle in the override modal initialises to ON by default. */
   overrideRenameDefault: boolean;
+  /** Default meeting duration in minutes for manual entry and start-time rounding. */
+  timeIncrement: 15 | 30 | 60;
 }
 
 export const DEFAULT_SETTINGS: IcalMeetingNotesSettings = {
@@ -38,6 +40,7 @@ export const DEFAULT_SETTINGS: IcalMeetingNotesSettings = {
   notesHeading: "## Invite Notes",
   openAfterCreate: true,
   overrideRenameDefault: false,
+  timeIncrement: 30,
 };
 
 // ── Folder suggest ─────────────────────────────────────────────────────────
@@ -234,5 +237,20 @@ export class IcalMeetingNotesSettingTab extends PluginSettingTab {
           await this.plugin.saveSettings();
         })
       );
+
+    new Setting(containerEl)
+      .setName(t("settings.time_increment.name"))
+      .setDesc(t("settings.time_increment.desc"))
+      .addDropdown((drop) => {
+        drop
+          .addOption("15", "15 min")
+          .addOption("30", "30 min")
+          .addOption("60", "60 min")
+          .setValue(String(this.plugin.settings.timeIncrement))
+          .onChange(async (value) => {
+            this.plugin.settings.timeIncrement = Number(value) as 15 | 30 | 60;
+            await this.plugin.saveSettings();
+          });
+      });
   }
 }

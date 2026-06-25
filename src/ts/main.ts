@@ -1,5 +1,5 @@
 import { App, Modal, Notice, Plugin, Setting, TFile } from "obsidian";
-import { parseIcs, parseOutlookText } from "./icalParser";
+import { parseIcs, parseOutlookText, MeetingEvent } from "./icalParser";
 import { createMeetingNote, overrideMeetingNote, resolveTargetFolder } from "./noteCreator";
 import {
   DEFAULT_SETTINGS,
@@ -15,11 +15,32 @@ interface OverrideOptions {
   renameNote: boolean;
 }
 
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+function todayISO(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function roundToNearestIncrement(date: Date, incrementMinutes: number): string {
+  const total = date.getHours() * 60 + date.getMinutes();
+  const rounded = Math.round(total / incrementMinutes) * incrementMinutes;
+  const clamped = rounded % (24 * 60);
+  return `${String(Math.floor(clamped / 60)).padStart(2, "0")}:${String(clamped % 60).padStart(2, "0")}`;
+}
+
+function addMinutesToTime(hhmm: string, minutes: number): string {
+  const [h, m] = hhmm.split(":").map(Number);
+  const total = ((h * 60 + m + minutes) % (24 * 60) + 24 * 60) % (24 * 60);
+  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+}
+
 // ── Drop Modal ─────────────────────────────────────────────────────────────
 
 class IcsDropModal extends Modal {
   private onDrop: (e: DragEvent, opts: OverrideOptions) => void;
   private onFilePicked: (file: File, opts: OverrideOptions) => void;
+  private onManualCreate: (event: MeetingEvent, opts: OverrideOptions) => void;
   private settings: IcalMeetingNotesSettings;
 
   private activeFile: TFile | null = null;
@@ -30,12 +51,14 @@ class IcsDropModal extends Modal {
     app: App,
     settings: IcalMeetingNotesSettings,
     onDrop: (e: DragEvent, opts: OverrideOptions) => void,
-    onFilePicked: (file: File, opts: OverrideOptions) => void
+    onFilePicked: (file: File, opts: OverrideOptions) => void,
+    onManualCreate: (event: MeetingEvent, opts: OverrideOptions) => void
   ) {
     super(app);
     this.settings = settings;
     this.onDrop = onDrop;
     this.onFilePicked = onFilePicked;
+    this.onManualCreate = onManualCreate;
   }
 
   onOpen() {
@@ -49,9 +72,94 @@ class IcsDropModal extends Modal {
 
     contentEl.createEl("h2", { text: t("modal.title") });
 
-    const zone = contentEl.createDiv({ cls: "ical-drop-zone" });
+    // ── Tab bar ──────────────────────────────────────────────────────────
+    const tabBar = contentEl.createDiv({ cls: "ical-tabs" });
+    const tabFile = tabBar.createDiv({ cls: "ical-tab ical-tab--active", text: t("modal.tab_from_file") });
+    const tabManual = tabBar.createDiv({ cls: "ical-tab", text: t("modal.tab_manual") });
 
-    // Calendar icon showing today's date
+    // ── Tab panels ───────────────────────────────────────────────────────
+    const panelFile = contentEl.createDiv({ cls: "ical-tab-panel" });
+    const panelManual = contentEl.createDiv({ cls: "ical-tab-panel ical-tab-panel--hidden" });
+
+    this.buildFilePanel(panelFile);
+    const manualTitleInput = this.buildManualPanel(panelManual);
+
+    // ── Tab switching ────────────────────────────────────────────────────
+    tabFile.addEventListener("click", () => {
+      tabFile.addClass("ical-tab--active");
+      tabManual.removeClass("ical-tab--active");
+      panelFile.removeClass("ical-tab-panel--hidden");
+      panelManual.addClass("ical-tab-panel--hidden");
+    });
+
+    tabManual.addEventListener("click", () => {
+      tabManual.addClass("ical-tab--active");
+      tabFile.removeClass("ical-tab--active");
+      panelManual.removeClass("ical-tab-panel--hidden");
+      panelFile.addClass("ical-tab-panel--hidden");
+      manualTitleInput.focus();
+    });
+
+    // ── Shared section ───────────────────────────────────────────────────
+    // Declare before the if-block so onChange closures can capture them.
+    let saveToEl!: HTMLParagraphElement;
+    let overrideLabelEl!: HTMLParagraphElement;
+    let overrideLabelText!: HTMLSpanElement;
+
+    // Toggles first
+    if (this.activeFile) {
+      let renameRowContainer!: HTMLDivElement;
+      let renameToggle!: { setValue: (v: boolean) => unknown };
+
+      new Setting(contentEl)
+        .setName(t("modal.override_toggle"))
+        .addToggle((toggle) => {
+          toggle.setValue(false).onChange((val) => {
+            this.overrideNote = val;
+            saveToEl.toggleClass("ical-hidden", val);
+            overrideLabelEl.toggleClass("ical-hidden", !val);
+            renameRowContainer.toggleClass("ical-hidden", !val);
+            const seedRename = val ? this.settings.overrideRenameDefault : false;
+            this.renameNote = seedRename;
+            renameToggle.setValue(seedRename);
+            overrideLabelText.setText(seedRename ? t("modal.override_rename_label") : t("modal.override_content_label"));
+          });
+        });
+
+      renameRowContainer = contentEl.createDiv();
+      renameRowContainer.addClass("ical-hidden");
+      new Setting(renameRowContainer)
+        .setName(t("modal.rename_toggle"))
+        .addToggle((toggle) => {
+          renameToggle = toggle;
+          toggle.setValue(false).onChange((val) => {
+            this.renameNote = val;
+            overrideLabelText.setText(val ? t("modal.override_rename_label") : t("modal.override_content_label"));
+          });
+        });
+    }
+
+    // Target note info below the toggles
+    const folder = resolveTargetFolder(this.app, this.settings);
+    const saveToKey = this.settings.useActiveFolder ? "modal.save_to_active" : "modal.save_to";
+
+    saveToEl = contentEl.createEl("p", { cls: "ical-save-location" });
+    saveToEl.createEl("span", { cls: "ical-save-location__label", text: t(saveToKey) });
+    saveToEl.createEl("span", { cls: "ical-save-location__value", text: folder || t("modal.vault_root") });
+
+    overrideLabelEl = contentEl.createEl("p", { cls: "ical-save-location" });
+    overrideLabelEl.addClass("ical-hidden");
+    overrideLabelText = overrideLabelEl.createEl("span", { cls: "ical-save-location__label" });
+    overrideLabelText.setText(t("modal.override_content_label"));
+    overrideLabelEl.createEl("span", {
+      cls: "ical-save-location__value",
+      text: this.activeFile ? `${this.activeFile.basename}.md` : "",
+    });
+  }
+
+  private buildFilePanel(container: HTMLElement): void {
+    const zone = container.createDiv({ cls: "ical-drop-zone" });
+
     const iconWrap = zone.createDiv({ cls: "ical-cal-icon" });
     const rings = iconWrap.createDiv({ cls: "ical-cal-rings" });
     rings.createDiv({ cls: "ical-cal-ring" });
@@ -63,28 +171,11 @@ class IcsDropModal extends Modal {
       text: now.toLocaleString(locale(), { month: "short" }).toUpperCase(),
     });
     card.createDiv({ cls: "ical-cal-day", text: String(now.getDate()) });
+
     zone.createEl("p", { cls: "ical-drop-label", text: t("modal.drop_label") });
     zone.createEl("p", { cls: "ical-drop-hint", text: t("modal.drop_hint") });
 
-    const folder = resolveTargetFolder(this.app, this.settings);
-    const saveToKey = this.settings.useActiveFolder ? "modal.save_to_active" : "modal.save_to";
-
-    // Save-to label (shown when override is OFF)
-    const saveToEl = zone.createEl("p", { cls: "ical-save-location" });
-    saveToEl.appendText(t(saveToKey));
-    saveToEl.createEl("strong", { text: folder || t("modal.vault_root") });
-
-    // Override label (shown when override is ON)
-    const overrideLabelEl = zone.createEl("p", { cls: "ical-save-location" });
-    overrideLabelEl.addClass("ical-hidden");
-    const overrideLabelText = overrideLabelEl.createSpan();
-    overrideLabelText.setText(t("modal.override_content_label"));
-    overrideLabelEl.createEl("strong", {
-      text: this.activeFile ? `${this.activeFile.basename}.md` : "",
-    });
-
-    // Hidden file input for click-to-browse
-    const fileInput = contentEl.createEl("input", {
+    const fileInput = container.createEl("input", {
       type: "file",
       attr: { accept: ".ics,.ical,text/calendar", style: "display:none" },
     });
@@ -117,41 +208,74 @@ class IcsDropModal extends Modal {
       this.close();
       this.onDrop(e, opts);
     });
+  }
 
-    // Override toggle (only when an active file exists)
-    if (this.activeFile) {
-      // Both renameRowContainer and renameToggle are assigned after their respective Settings
-      // but are always defined by the time onChange fires (captured by reference).
-      let renameRowContainer!: HTMLDivElement;
-      let renameToggle!: { setValue: (v: boolean) => unknown };
+  private buildManualPanel(container: HTMLElement): HTMLInputElement {
+    const form = container.createDiv({ cls: "ical-manual-form" });
 
-      new Setting(contentEl)
-        .setName(t("modal.override_toggle"))
-        .addToggle((toggle) => {
-          toggle.setValue(false).onChange((val) => {
-            this.overrideNote = val;
-            saveToEl.toggleClass("ical-hidden", val);
-            overrideLabelEl.toggleClass("ical-hidden", !val);
-            renameRowContainer.toggleClass("ical-hidden", !val);
-            const seedRename = val ? this.settings.overrideRenameDefault : false;
-            this.renameNote = seedRename;
-            renameToggle.setValue(seedRename);
-            overrideLabelText.setText(seedRename ? t("modal.override_rename_label") : t("modal.override_content_label"));
-          });
-        });
+    // Title
+    const titleRow = form.createDiv({ cls: "ical-manual-row" });
+    titleRow.createEl("label", { cls: "ical-manual-label", text: t("modal.manual_title_label") });
+    const titleInput = titleRow.createEl("input", {
+      type: "text",
+      attr: { placeholder: t("modal.manual_title_placeholder") },
+    });
 
-      renameRowContainer = contentEl.createDiv();
-      renameRowContainer.addClass("ical-hidden");
-      new Setting(renameRowContainer)
-        .setName(t("modal.rename_toggle"))
-        .addToggle((toggle) => {
-          renameToggle = toggle;
-          toggle.setValue(false).onChange((val) => {
-            this.renameNote = val;
-            overrideLabelText.setText(val ? t("modal.override_rename_label") : t("modal.override_content_label"));
-          });
-        });
-    }
+    // Date
+    const dateRow = form.createDiv({ cls: "ical-manual-row" });
+    dateRow.createEl("label", { cls: "ical-manual-label", text: t("modal.manual_date_label") });
+    const dateInput = dateRow.createEl("input", {
+      type: "date",
+      attr: { value: todayISO() },
+    });
+
+    // Start time
+    const startRow = form.createDiv({ cls: "ical-manual-row" });
+    startRow.createEl("label", { cls: "ical-manual-label", text: t("modal.manual_start_label") });
+    const startDefault = roundToNearestIncrement(new Date(), this.settings.timeIncrement);
+    const stepSeconds = String(this.settings.timeIncrement * 60);
+    const startInput = startRow.createEl("input", {
+      type: "time",
+      attr: { value: startDefault, step: stepSeconds },
+    });
+
+    // End time
+    const endRow = form.createDiv({ cls: "ical-manual-row" });
+    endRow.createEl("label", { cls: "ical-manual-label", text: t("modal.manual_end_label") });
+    const endDefault = addMinutesToTime(startDefault, this.settings.timeIncrement);
+    const endInput = endRow.createEl("input", {
+      type: "time",
+      attr: { value: endDefault, step: stepSeconds },
+    });
+
+    // Create button
+    const btn = form.createEl("button", {
+      cls: "mod-cta ical-manual-create",
+      text: t("modal.manual_create_button"),
+    });
+    titleInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") btn.click();
+    });
+
+    btn.addEventListener("click", () => {
+      const title = titleInput.value.trim() || t("modal.manual_title_placeholder");
+      const event: MeetingEvent = {
+        title,
+        date: dateInput.value || todayISO(),
+        startTime: startInput.value,
+        endTime: endInput.value,
+        organizer: "",
+        attendees: [],
+        description: "",
+        location: "",
+        meetingUrl: "",
+      };
+      const opts = this.buildOpts();
+      this.close();
+      this.onManualCreate(event, opts);
+    });
+
+    return titleInput;
   }
 
   private buildOpts(): OverrideOptions {
@@ -199,7 +323,8 @@ export default class IcalMeetingNotesPlugin extends Plugin {
       this.app,
       this.settings,
       (e, opts) => this.handleDrop(e, opts),
-      (file, opts) => this.readFileAsText(file, opts)
+      (file, opts) => this.readFileAsText(file, opts),
+      (event, opts) => void this.processEvent(event, opts)
     ).open();
   }
 
@@ -277,7 +402,7 @@ export default class IcalMeetingNotesPlugin extends Plugin {
     await this.processEvent(event, opts);
   }
 
-  async processEvent(event: import("./icalParser").MeetingEvent, opts: OverrideOptions = { overrideNote: null, renameNote: false }) {
+  async processEvent(event: MeetingEvent, opts: OverrideOptions = { overrideNote: null, renameNote: false }) {
     let note;
     try {
       if (opts.overrideNote) {

@@ -84,17 +84,37 @@
   text-align: center;
 }
 
-.ical-modal .ical-save-location {
-  margin: 12px 0 0;
-  font-size: 0.8rem;
-  color: var(--text-faint);
-  text-align: center;
+/* Normalize toggle rows so all shared-section items share the same rhythm */
+.ical-modal .setting-item {
+  padding: 8px 0;
+  border-top: none;
+  border-bottom: none;
 }
 
-.ical-modal .ical-save-location strong {
-  display: block;
+.ical-modal .setting-item-info {
+  gap: 0;
+}
+
+.ical-modal .ical-save-location {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 8px 0;
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.ical-modal .ical-save-location__label {
   color: var(--text-muted);
-  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.ical-modal .ical-save-location__value {
+  color: var(--text-normal);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ical-hidden {
@@ -122,4 +142,78 @@
 
 .ical-var-ref__list li {
   margin: 2px 0;
+}
+
+/* ── Tab structure ─────────────────────────────────────────────────────────── */
+
+.ical-tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  margin-bottom: 4px;
+}
+
+.ical-tab {
+  padding: 6px 14px;
+  border-radius: var(--radius-s) var(--radius-s) 0 0;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  border: 1px solid transparent;
+  border-bottom: none;
+  margin-bottom: -1px;
+  user-select: none;
+}
+
+.ical-tab:hover {
+  color: var(--text-normal);
+}
+
+.ical-tab--active {
+  color: var(--text-normal);
+  background: var(--background-primary);
+  border-color: var(--background-modifier-border);
+}
+
+.ical-tab-panel--hidden {
+  display: none;
+}
+
+/* ── Manual entry form ─────────────────────────────────────────────────────── */
+
+.ical-manual-form {
+  padding: 12px 0 4px;
+}
+
+.ical-manual-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.ical-manual-label {
+  min-width: 48px;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.ical-manual-row input[type="text"],
+.ical-manual-row input[type="date"],
+.ical-manual-row input[type="time"] {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+
+.ical-manual-create {
+  margin-top: 12px;
+  width: 100%;
 }
